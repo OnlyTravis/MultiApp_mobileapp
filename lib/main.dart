@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:multi_app/code/database_handler.dart';
 import 'package:multi_app/pages/home_page.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await initDatabaseHandler();
+
   runApp(const MultiApp());
 }
 
@@ -11,7 +16,7 @@ class MultiApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Multi App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
