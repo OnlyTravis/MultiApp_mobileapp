@@ -12,8 +12,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return NavigationWrap(
-      title: "Home Page"
-      
+      title: "Home Page",
+      child: Text("This is home"),
     );
   }
 }
