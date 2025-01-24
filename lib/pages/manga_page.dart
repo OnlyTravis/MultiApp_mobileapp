@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:multi_app/widgets/navigation_wrap.dart';
 
 class MangaPage extends StatefulWidget {
   const MangaPage({super.key});
@@ -10,8 +9,6 @@ class MangaPage extends StatefulWidget {
 class _MangaPageState extends State<MangaPage> {
   @override
   Widget build(BuildContext context) {
-    return NavigationWrap(
-      title: "Manga Page"
-    );
+    return Text("WIP");
   }
 }

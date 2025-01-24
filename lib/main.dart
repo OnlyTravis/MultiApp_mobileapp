@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:multi_app/code/database_handler.dart';
-import 'package:multi_app/pages/home_page.dart';
+import 'package:multi_app/widgets/navigation_wrap.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +21,7 @@ class MultiApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: NavigationWrap(),
     );
   }
 }
