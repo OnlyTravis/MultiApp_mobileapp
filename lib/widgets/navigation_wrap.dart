@@ -33,7 +33,6 @@ class _NavigationWrapState extends State<NavigationWrap> {
     Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
         pageBuilder: (context, _, __) => toPage(navigationList[index].page),
-        
       ),
       (_) => false
     );
@@ -47,12 +46,29 @@ class _NavigationWrapState extends State<NavigationWrap> {
     }
   }
 
+  void initPosition() {
+    Size size = MediaQuery.of(context).size;
+    double width = size.width;
+
+    _controller.jumpTo(selectIndex * width * 2 / 11);
+  }
+
+  @override
+  void initState() {
+    // Runs after build
+    WidgetsBinding.instance.addPostFrameCallback((_) => initPosition());
+    _controller.addListener(() {
+      print("AAAAAA");
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-        title: Text(widget.title),
+        title: const Text("Multi-App", textScaler: TextScaler.linear(1.5)),
       ),
       body: Container(
         color: Theme.of(context).colorScheme.primaryContainer,
@@ -68,11 +84,11 @@ class _NavigationWrapState extends State<NavigationWrap> {
 
   Widget _navigationBar() {
     return SizedBox(
-      height: 64,
+      height: 48,
       child: CarouselView.weighted(
         controller: _controller,
         itemSnapping: true,
-        flexWeights: [2, 3, 4, 3, 2],
+        flexWeights: [2, 2, 3, 2, 2],
         backgroundColor: Colors.transparent,
         onTap: (int index) => button_onNavigate(index),
         children: [
@@ -85,10 +101,12 @@ class _NavigationWrapState extends State<NavigationWrap> {
     return Stack(
       children: [
         Center(
-          child: InkWell(
-            onTap: () => button_onNavigate(index), 
-            child: Text(title, overflow: TextOverflow.fade, softWrap: false)
-          ),
+          child: Text(
+            title, 
+            overflow: TextOverflow.fade, 
+            softWrap: false,
+            textScaler: (selectIndex == index)?TextScaler.linear(1.5):null,
+          )
         )
       ],
     );
@@ -98,9 +116,10 @@ class _NavigationWrapState extends State<NavigationWrap> {
     return Expanded(
       child: Container(
         width: double.infinity,
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32))
+          borderRadius: const BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32))
         ),
         child: widget.child,
       ),

@@ -22,9 +22,29 @@ class DatabaseHandler {
     await _initDatabaseTable();
   }
   Future<void> _initDatabaseTable() async {
-    // todo : think of table structures
-  }
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS Mangas (
+        id INTEGER
 
+        ch_name TEXT
+        ch_link TEXT
+        en_name TEXT
+        en_link TEXT
+        jp_name TEXT
+        jp_link TEXT
+        img_link TEXT
+
+        rating REAL
+        tag_list TEXT
+      );
+      CREATE TABLE IF NOT EXISTS MangaTags (
+        name TEXT
+        id INTEGER
+        color INTEGER
+        count INTEGER
+      );
+    ''');
+  }
   factory DatabaseHandler() {
     return _instance;
   }
