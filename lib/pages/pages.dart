@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:multi_app/pages/home_page.dart';
-import 'package:multi_app/pages/manga_page.dart';
+import 'package:multi_app/pages/manga_page/main.dart';
 
 enum Pages {
   none,
