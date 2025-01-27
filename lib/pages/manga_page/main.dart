@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:multi_app/code/classes.dart';
+import 'package:multi_app/pages/manga_page/add_manga.dart';
 import 'package:multi_app/widgets/star_rating.dart';
 
 class MangaPage extends StatefulWidget {
@@ -14,14 +15,47 @@ class _MangaPageState extends State<MangaPage> {
     Manga(id: 1, en_name: "This is an Englist Name"),
   ];
 
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      children: mangaList.map((Manga manga) => mangaCard(manga)).toList(),
+  void button_onAddManga() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => AddMangaPage()
+      )
     );
   }
 
-  Widget mangaCard(Manga manga) {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: _toolBar(),
+      body: ListView(
+        padding: const EdgeInsets.all(8),
+        children: mangaList.asMap().entries.map((entry) => _mangaCard(entry.value, entry.key)).toList(),
+      ),
+    );
+  }
+
+  AppBar _toolBar() {
+    return AppBar(
+      toolbarHeight: 40,
+      backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+      actions: [
+        IconButton(
+          onPressed: () {}, 
+          icon: Wrap(
+            children: [
+              Text("Filter"),
+              Icon(Icons.filter_alt),
+            ],
+          ),
+        ),
+        IconButton(
+          onPressed: button_onAddManga, 
+          icon: Icon(Icons.add),
+        ),
+      ],
+    );
+  }
+  Widget _mangaCard(Manga manga, int index) {
     final String mangaName = manga.ch_name ?? manga.en_name ?? manga.jp_name ?? "null";
 
     return Card(
@@ -44,13 +78,15 @@ class _MangaPageState extends State<MangaPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(mangaName),
+                  Text("${index+1}. $mangaName"),
                   Row(
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text("Chapters : "),
-                      if (manga.rating != -1) StarRating(label: "Rating : ", value: manga.rating)
+                      (manga.rating != -1) ? 
+                        StarRating(label: "Rating : ", value: manga.rating) :
+                        Text("No Rating")
                     ],
                   )
                 ],

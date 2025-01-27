@@ -12,6 +12,7 @@ class StarRating extends StatelessWidget {
       throw RangeError.range(value, 0, 5);
     }
     return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         if (label != null) Text(label ?? ""),
         ...[1,2,3,4,5].map((int num) => Icon(
