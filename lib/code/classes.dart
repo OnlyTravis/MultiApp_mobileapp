@@ -1,11 +1,37 @@
 import 'dart:convert';
+enum MangaLength {
+  short(0),
+  medium(1),
+  long(2),
+  veryLong(3);
 
+  const MangaLength(int value);
+
+  factory MangaLength.fromValue(int value) {
+    return MangaLength.values.firstWhere((val) => val.index == value);
+  }
+
+  @override
+  String toString() {
+    switch (this) {
+      case MangaLength.short: return "Short";
+      case MangaLength.medium: return "Medium";
+      case MangaLength.long: return "Long";
+      case MangaLength.veryLong: return "Very Long";
+    }
+  }
+}
 class Manga {
+  final int id;
+
   final String? ch_name, en_name, jp_name;
   final String? ch_link, en_link, jp_link;
   final String? img_link;
-  final int id;
+
   final double rating;
+  final int chapter_count;
+  final MangaLength length;
+  final bool ended;
   final List<int> tag_list;
 
   Manga({
@@ -17,6 +43,9 @@ class Manga {
     this.jp_link,
     this.img_link,
     required this.id,
+    required this.chapter_count,
+    required this.length,
+    required this.ended,
     this.rating = -1,
     this.tag_list = const [],
   });
@@ -31,6 +60,9 @@ class Manga {
       jp_link: map["jp_link"],
       img_link: map["img_list"],
       id: map["id"],
+      chapter_count: map["chapter_count"],
+      length: MangaLength.fromValue(map["length"] as int),
+      ended: map["ended"] == 1,
       rating: map["rating"] ?? -1,
       tag_list: (map["tagList"] == null)?[]:jsonDecode(map["tag_list"] as String).cast<int>()
     );

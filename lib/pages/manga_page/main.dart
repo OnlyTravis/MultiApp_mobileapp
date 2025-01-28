@@ -10,10 +10,7 @@ class MangaPage extends StatefulWidget {
   State<MangaPage> createState() => _MangaPageState();
 }
 class _MangaPageState extends State<MangaPage> {
-  List<Manga> mangaList = [
-    Manga(id: 0, ch_name: "This is a Chinese Name", rating: 3.5),
-    Manga(id: 1, en_name: "This is an Englist Name"),
-  ];
+  List<Manga> mangaList = [];
 
   void button_onAddManga() {
     Navigator.of(context).push(

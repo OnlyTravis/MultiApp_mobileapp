@@ -37,6 +37,7 @@ class DatabaseHandler {
         rating REAL
         tag_list TEXT
         chapter_count INTEGER
+        length INTEGER
         ended INTEGER
       );
       CREATE TABLE IF NOT EXISTS MangaTags (
