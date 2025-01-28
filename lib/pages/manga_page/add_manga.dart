@@ -13,6 +13,9 @@ class _AddMangaPageState extends State<AddMangaPage> {
   List<TextEditingController> inputLinkControllers = [TextEditingController(), TextEditingController(), TextEditingController()];
   TextEditingController imageLinkController = TextEditingController();
 
+  double rating = 0;
+  bool toggleRating = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,7 +30,7 @@ class _AddMangaPageState extends State<AddMangaPage> {
           _cardTitle(title: "3. Manga Image Link : (if any)"),
           _textInputCard(labelList: const ["Image Link"], controllerList: [imageLinkController]),
           _cardTitle(title: "4. Others : "),
-
+          _otherInputCard()
         ],
       ),
     );
@@ -59,14 +62,50 @@ class _AddMangaPageState extends State<AddMangaPage> {
       ),
     );
   }
+
   Widget _otherInputCard() {
     return AppCard(
-      padding: const EdgeInsets.all(16),
-      child: ListView(
+      child: Column(
         children: [
-          
+          _ratingInput(),
+          Divider(),
+
         ],
       ),
+    );
+  }
+  Widget _ratingInput() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListTile(
+          title: Text("Rating"),
+          trailing: Switch(
+            value: toggleRating, 
+            onChanged: (bool newValue) {
+              setState(() {
+                toggleRating = newValue;
+              });
+            }
+          ),
+        ),
+        if (toggleRating) ...[
+          ClipOval(
+            child: ,
+          ),
+          Text(((rating*10).floor()/10).toString()),
+          Slider(
+            min: 0,
+            max: 5,
+            value: rating, 
+            onChanged: (newValue) {
+              setState(() {
+                rating = newValue;
+              });
+            }
+          )
+        ]
+      ],
     );
   }
 }
