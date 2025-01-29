@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:multi_app/code/classes.dart';
+import 'package:multi_app/code/database_handler.dart';
 import 'package:multi_app/pages/manga_page/add_manga.dart';
 import 'package:multi_app/widgets/star_rating.dart';
 
@@ -10,6 +13,7 @@ class MangaPage extends StatefulWidget {
   State<MangaPage> createState() => _MangaPageState();
 }
 class _MangaPageState extends State<MangaPage> {
+  late StreamSubscription streamSubscription;
   List<Manga> mangaList = [];
 
   void button_onAddManga() {
@@ -18,6 +22,28 @@ class _MangaPageState extends State<MangaPage> {
         builder: (context) => AddMangaPage()
       )
     );
+  }
+
+  Future<void> updateMangaList() async {
+    final db = DatabaseHandler();
+    final List<Manga> tmpList = await db.getAllManga();
+    setState(() {
+      mangaList = tmpList;
+    });
+  }
+
+  @override
+  void initState() {
+    updateMangaList();
+
+    final db = DatabaseHandler();
+    if (db.streams[DatabaseTables.mangas] != null) {
+      streamSubscription = db.streams[DatabaseTables.mangas]!.listen((_) {
+        updateMangaList();
+      });
+    }
+
+    super.initState();
   }
 
   @override
@@ -29,6 +55,12 @@ class _MangaPageState extends State<MangaPage> {
         children: mangaList.asMap().entries.map((entry) => _mangaCard(entry.value, entry.key)).toList(),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    streamSubscription.cancel();
+    super.dispose();
   }
 
   AppBar _toolBar() {
@@ -80,9 +112,9 @@ class _MangaPageState extends State<MangaPage> {
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Chapters : "),
+                      Text("Chapters : ${manga.chapter_count}"),
                       (manga.rating != -1) ? 
-                        StarRating(label: "Rating : ", value: manga.rating) :
+                        StarRating(value: manga.rating) :
                         Text("No Rating")
                     ],
                   )

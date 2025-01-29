@@ -1,4 +1,13 @@
+import 'dart:async';
+
+import 'package:multi_app/code/classes.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:sqflite/sqflite.dart';
+
+enum DatabaseTables {
+  mangas,
+  mangaTags;
+}
 
 Future<void> initDatabaseHandler() async {
   final db = DatabaseHandler();
@@ -9,6 +18,7 @@ class DatabaseHandler {
   static final DatabaseHandler _instance = DatabaseHandler._internal();
 
   late Database db;
+  Map<DatabaseTables, BehaviorSubject> streams = {};
   String databasePath = "";
 
   DatabaseHandler._internal();
@@ -20,35 +30,64 @@ class DatabaseHandler {
     // 2. open & init database
     db = await openDatabase(databasePath);
     await _initDatabaseTable();
+
+    // 3. Init Streams
+    _initStreams();
   }
   Future<void> _initDatabaseTable() async {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS Mangas (
-        id INTEGER
+        ch_name TEXT,
+        ch_link TEXT,
+        en_name TEXT,
+        en_link TEXT,
+        jp_name TEXT,
+        jp_link TEXT,
+        img_link TEXT,
 
-        ch_name TEXT
-        ch_link TEXT
-        en_name TEXT
-        en_link TEXT
-        jp_name TEXT
-        jp_link TEXT
-        img_link TEXT
-
-        rating REAL
-        tag_list TEXT
-        chapter_count INTEGER
-        length INTEGER
-        ended INTEGER
+        rating REAL,
+        tag_list TEXT,
+        chapter_count INTEGER,
+        length INTEGER,
+        ended INTEGER,
+        
+        id INTEGER PRIMARY KEY AUTOINCREMENT
       );
       CREATE TABLE IF NOT EXISTS MangaTags (
-        name TEXT
-        id INTEGER
-        color INTEGER
-        count INTEGER
+        name TEXT,
+        color INTEGER,
+        count INTEGER,
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT
       );
     ''');
   }
-  factory DatabaseHandler() {
-    return _instance;
+  Future<void> _initStreams() async {
+    for (final table in DatabaseTables.values) {
+      streams[table] = BehaviorSubject();
+    }
+  }
+  factory DatabaseHandler() => _instance;
+
+  void notifyUpdate(DatabaseTables table) {
+    streams[table]!.add("");
+  }
+
+  Future<void> createManga(Manga manga) async {
+    final map = manga.toMap();
+    map["id"] = null;
+    await db.insert("Mangas", map);
+  }
+
+  Future<List<Manga>> getAllManga() async {
+    final results = await db.rawQuery('''
+      SELECT * FROM Mangas;
+    ''');
+
+    List<Manga> arr = [];
+    for (final result in results) {
+      arr.add(Manga.fromMap(result));
+    }
+    return arr;
   }
 }

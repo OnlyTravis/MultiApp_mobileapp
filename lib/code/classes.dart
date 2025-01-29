@@ -22,7 +22,7 @@ enum MangaLength {
   }
 }
 class Manga {
-  final int id;
+  final int? id;
 
   final String? ch_name, en_name, jp_name;
   final String? ch_link, en_link, jp_link;
@@ -64,8 +64,28 @@ class Manga {
       length: MangaLength.fromValue(map["length"] as int),
       ended: map["ended"] == 1,
       rating: map["rating"] ?? -1,
-      tag_list: (map["tagList"] == null)?[]:jsonDecode(map["tag_list"] as String).cast<int>()
+      tag_list: (map["tag_list"] == null)?[]:jsonDecode(map["tag_list"] as String).cast<int>()
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    final Map<String, dynamic> map = {
+      "id": id,
+      "chapter_count": chapter_count,
+      "length": length.index,
+      "ended": ended?1:0,
+    };
+    if (rating != -1) map["rating"] = rating;
+    if (tag_list.isNotEmpty) map["tag_list"] = jsonEncode(tag_list);
+    if ((img_link ?? "").isNotEmpty) map["img_link"] = img_link;
+    if ((ch_name ?? "").isNotEmpty) map["ch_name"] = ch_name;
+    if ((ch_link ?? "").isNotEmpty) map["ch_link"] = ch_link;
+    if ((en_name ?? "").isNotEmpty) map["en_name"] = en_name;
+    if ((en_link ?? "").isNotEmpty) map["en_link"] = en_link;
+    if ((jp_name ?? "").isNotEmpty) map["jp_name"] = jp_name;
+    if ((jp_link ?? "").isNotEmpty) map["jp_link"] = jp_link;
+
+    return map;
   }
 }
 class MangaTag {
