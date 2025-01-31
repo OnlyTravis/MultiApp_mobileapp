@@ -34,13 +34,13 @@ class _AddMangaPageState extends State<AddMangaPage> {
       }
     }
     if (failed) {
-      alert(context, "Please enter atleast 1 valid manga name.");
+      alert(context, text: "Please enter atleast 1 valid manga name.");
       return false;
     }
 
     // Number of Chapters
     if (chapterCountController.text.isEmpty) {
-      alert(context, "Please Enter Number of Chapters");
+      alert(context, text: "Please Enter Number of Chapters");
       return false;
     }
 
@@ -48,7 +48,7 @@ class _AddMangaPageState extends State<AddMangaPage> {
   }
   Future<void> button_onCreateManga() async {
     if (!checkValues()) return;
-    if (!await confirm(context, "Confirm Creating", "Are you sure you want to create this manga entry?")) return;
+    if (!await confirm(context, title: "Confirm Creating", text: "Are you sure you want to create this manga entry?")) return;
 
     final db = DatabaseHandler();
     final Manga manga = Manga(
@@ -68,7 +68,7 @@ class _AddMangaPageState extends State<AddMangaPage> {
     await db.createManga(manga);
 
     if (mounted) {
-      alert(context, "Manga Added !");
+      alert(context, text: "Manga Added !");
       Navigator.pop(context);
       db.notifyUpdate(DatabaseTables.mangas);
     }

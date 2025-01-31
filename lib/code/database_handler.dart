@@ -53,6 +53,8 @@ class DatabaseHandler {
         
         id INTEGER PRIMARY KEY AUTOINCREMENT
       );
+    ''');
+    await db.execute('''
       CREATE TABLE IF NOT EXISTS MangaTags (
         name TEXT,
         color INTEGER,
@@ -78,7 +80,9 @@ class DatabaseHandler {
     map["id"] = null;
     await db.insert("Mangas", map);
   }
-
+  Future<void> updateManga(Manga manga) async {
+    await db.update("Mangas", manga.toMap(), where: "id = ${manga.id}");
+  }
   Future<List<Manga>> getAllManga() async {
     final results = await db.rawQuery('''
       SELECT * FROM Mangas;

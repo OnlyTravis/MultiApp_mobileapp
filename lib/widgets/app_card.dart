@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 
 class AppCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
   final Color? color;
   final Widget? child;
-  const AppCard({super.key, this.padding, this.color, this.child});
+  const AppCard({super.key, this.color, this.padding, this.margin, this.child});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: padding,
-      margin: const EdgeInsets.all(4),
+      margin: margin,
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
@@ -29,15 +30,17 @@ class AppCard extends StatelessWidget {
 }
 class AppCardSplash extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
   final Color? color;
   final Widget? child;
-  const AppCardSplash({super.key, this.padding, this.color, this.child});
+  const AppCardSplash({super.key, this.color, this.padding, this.margin, this.child});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       clipBehavior: Clip.antiAlias,
-      margin: const EdgeInsets.all(4),
+      padding: padding,
+      margin: margin,
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
