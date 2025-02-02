@@ -5,6 +5,7 @@ import 'package:multi_app/code/database_handler.dart';
 import 'package:multi_app/widgets/app_card.dart';
 import 'package:multi_app/widgets/manga_card.dart';
 import 'package:multi_app/widgets/page_appbar.dart';
+import 'package:multi_app/widgets/select_page.dart';
 
 class ViewMangaPage extends StatefulWidget {
   final Manga manga;
@@ -23,11 +24,27 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
     });
   }
   Future<void> button_editString(String name, String key, String old_value) async {
-    String newValue = await alertInput(context, title: "Update Value", text: "Change '$name' to : ", defaultValue: old_value);
+    final String newValue = await alertInput(context, title: "Update Value", text: "Change '$name' to : ", defaultValue: old_value);
     if (newValue.isEmpty) return;
 
+    await updateValue(key, newValue);
+  }
+  Future<void> button_editNumber(String name, String key, int old_value) async {
+    final int? newValue = await alertInput<int>(context, title: "Update Value", text: "Change '$name' to : ", defaultValue: old_value.toString());
+    if (newValue == null) return;
+
+    await updateValue(key, newValue);
+  }
+  Future<void> button_editMangaLength(String name, String key, int old_value) async {
+    final int? newValue = await alertInput<int>(context, title: "Update Value", text: "Change '$name' to : ", defaultValue: old_value.toString());
+    if (newValue == null) return;
+
+    await updateValue(key, newValue);
+  }
+
+  Future<void> updateValue(String key, dynamic value) async {
     final map = manga.toMap();
-    map[key] = newValue;
+    map[key] = value;
     setState(() {
       manga = Manga.fromMap(map);
     });
@@ -72,9 +89,16 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
     if (showAll || manga.en_link.isNotEmpty) arr.add(_textInfoCard(title: "English Manga Link", key: "en_link", value: manga.en_link));
     if (showAll || manga.jp_link.isNotEmpty) arr.add(_textInfoCard(title: "Japanese Manga Link", key: "jp_link", value: manga.jp_link));
     if (showAll || manga.img_link.isNotEmpty) arr.add(_textInfoCard(title: "Image Link", key: "img_link", value: manga.img_link));
+    
+    arr.addAll([
+      _numberInfoCard(title: "Chapter Count", key: "chapter_count", value: manga.chapter_count),
+      _mangaLengthCard(),
+    ]);
+
     return AppCardSplash(
       child: ListView.separated(
         shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
         itemBuilder:(context, index) => arr[index],
         separatorBuilder: (context, index) => Divider(height: 0),
         itemCount: arr.length,
@@ -87,6 +111,30 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
       contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       title: Text(title),
       subtitle: value.isEmpty ? const Text("Not Provided") : Text(value),
+    );
+  }
+  Widget _numberInfoCard({required String title, required String key, required int value}) {
+    return ListTile(
+      onTap: () => button_editNumber(title, key, value),
+      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      title: Text(title),
+      subtitle: Text(value.toString()),
+    );
+  }
+  Widget _mangaLengthCard() {
+    return ListTile(
+      onTap: () => selectPageInput(
+        context, 
+        title: "Manga Length", 
+        selected: manga.length.toString(), 
+        inputList: MangaLength.values.map((value) => value.toString()).toList(),
+        onSelectIndex: (int index) {
+          updateValue("length", MangaLength.values[index]);
+        }
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      title: Text("Manga Length"),
+      subtitle: Text(manga.length.toString()),
     );
   }
 }

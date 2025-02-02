@@ -3,3 +3,4 @@ include: package:flutter_lints/flutter.yaml
 linter:
   rules:
     non_constant_identifier_names: false
+    type_literal_in_constant_pattern: false

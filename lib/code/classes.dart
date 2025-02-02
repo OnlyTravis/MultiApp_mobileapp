@@ -64,7 +64,7 @@ class Manga {
       img_link: map["img_link"] ?? "",
       id: map["id"],
       chapter_count: map["chapter_count"],
-      length: MangaLength.fromValue(map["length"] as int),
+      length: (map["length"] is int) ? MangaLength.fromValue(map["length"] as int) : map["length"],
       ended: map["ended"] == 1,
       rating: map["rating"] ?? -1,
       tag_list: (map["tag_list"] == null)?[]:jsonDecode(map["tag_list"] as String).cast<int>()

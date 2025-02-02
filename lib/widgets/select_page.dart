@@ -1,6 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:multi_app/widgets/page_appbar.dart';
 
+void selectPageInput(BuildContext context, {
+  required String title,
+  required String selected,
+  required List<String> inputList,
+  Function(int)? onSelectIndex,
+}) {
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => SelectPage(
+        title: title,
+        selected: selected,
+        inputList: inputList,
+        onSelectIndex: onSelectIndex,
+      )
+    )
+  );
+}
+
 class SelectPage extends StatefulWidget {
   final String title;
   final String selected;

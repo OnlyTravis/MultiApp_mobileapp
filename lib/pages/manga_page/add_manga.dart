@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:multi_app/code/alert.dart';
 import 'package:multi_app/code/classes.dart';
 import 'package:multi_app/code/database_handler.dart';
@@ -90,7 +91,7 @@ class _AddMangaPageState extends State<AddMangaPage> {
             _cardTitle(title: "3. Manga Image Link : (if any)"),
             _textInputCard(labelList: const ["Image Link"], controllerList: [imageLinkController]),
             _cardTitle(title: "4. Others : "),
-            _otherInputCard(),
+            _otherInputCard(),            
             _confirmCard(),
           ],
         ),
@@ -186,7 +187,10 @@ class _AddMangaPageState extends State<AddMangaPage> {
       trailing: SizedBox(
         width: 128,
         child: TextField(
-          keyboardType: TextInputType.datetime,
+          keyboardType: TextInputType.numberWithOptions(decimal: false),
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
           decoration: InputDecoration(
             border: OutlineInputBorder(),
           ),
@@ -216,30 +220,25 @@ class _AddMangaPageState extends State<AddMangaPage> {
   }
   Widget _lengthInput() {
     return ListTile(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => SelectPage(
-              title: "Manga Length",
-              selected: mangaLength.toString(),
-              inputList: MangaLength.values.map((value) => value.toString()).toList(),
-              onSelectIndex: (int index) {
-                setState(() {
-                  mangaLength = MangaLength.values[index];
-                });
-              },
-            )
-          )
-        );
-      },
+      onTap: () => selectPageInput(
+        context, 
+        title: "Manga Length",
+        selected: mangaLength.toString(),
+        inputList: MangaLength.values.map((value) => value.toString()).toList(),
+        onSelectIndex: (int index) {
+          setState(() {
+            mangaLength = MangaLength.values[index];
+          });
+        },
+      ),
       contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       title: const Text("Manga Length : "),
       subtitle: Text(mangaLength.toString()),
     );
   }
-
   Widget _confirmCard() {
     return AppCard(
+      margin: EdgeInsets.only(top: 8),
       child: TextButton(
         onPressed: button_onCreateManga, 
         child: Text("Create Manga Entry")
