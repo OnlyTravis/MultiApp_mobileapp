@@ -57,7 +57,7 @@ class DatabaseHandler {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS MangaTags (
         name TEXT,
-        color INTEGER,
+        icon INTEGER,
         count INTEGER,
 
         id INTEGER PRIMARY KEY AUTOINCREMENT
@@ -91,6 +91,26 @@ class DatabaseHandler {
     List<Manga> arr = [];
     for (final result in results) {
       arr.add(Manga.fromMap(result));
+    }
+    return arr;
+  }
+
+  Future<void> createMangaTag(MangaTag tag) async {
+    final map = tag.toMap();
+    map["id"] = null;
+    await db.insert("MangaTags", map);
+  }
+  Future<void> updateMangaTag(MangaTag tag) async {
+    await db.update("MangaTags", tag.toMap(), where: "id = ${tag.id}");
+  }
+  Future<List<MangaTag>> getAllMangaTag() async {
+    final results = await db.rawQuery('''
+      SELECT * FROM MangaTags;
+    ''');
+
+    List<MangaTag> arr = [];
+    for (final result in results) {
+      arr.add(MangaTag.fromMap(result));
     }
     return arr;
   }

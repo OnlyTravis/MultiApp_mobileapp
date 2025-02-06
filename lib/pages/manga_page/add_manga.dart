@@ -62,7 +62,7 @@ class _AddMangaPageState extends State<AddMangaPage> {
       img_link: imageLinkController.text,
       id: -1, 
       chapter_count: int.parse(chapterCountController.text),
-      rating: (rating*10).floor()/10,
+      rating: toggleRating ? (rating*10).round()/10 : -1,
       length: mangaLength,
       ended: ended,
     );
@@ -149,7 +149,7 @@ class _AddMangaPageState extends State<AddMangaPage> {
       children: [
         ListTile(
           contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          title: Text(toggleRating?"Rating : ${(rating*10).floor()/10} / 5.0":"Rating : Off"),
+          title: Text(toggleRating?"Rating : ${(rating*10).round()/10} / 5.0":"Rating : Off"),
           trailing: Switch(
             value: toggleRating, 
             onChanged: (bool newValue) {
@@ -165,7 +165,7 @@ class _AddMangaPageState extends State<AddMangaPage> {
           },
         ),
         if (toggleRating) ...[
-          StarRating(value: (rating*10).floor()/10),
+          StarRating(value: (rating*10).round()/10),
           Slider(
             min: 0,
             max: 5,

@@ -6,6 +6,8 @@ import 'package:multi_app/widgets/app_card.dart';
 import 'package:multi_app/widgets/manga_card.dart';
 import 'package:multi_app/widgets/page_appbar.dart';
 import 'package:multi_app/widgets/select_page.dart';
+import 'package:multi_app/widgets/star_rating.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ViewMangaPage extends StatefulWidget {
   final Manga manga;
@@ -18,14 +20,17 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
   late Manga manga;
   bool editing = false;
 
+  double ratingBuffer = 0;
+
   void button_toggleEdit() {
     setState(() {
       editing = !editing;
     });
   }
   Future<void> button_editString(String name, String key, String old_value) async {
-    final String newValue = await alertInput(context, title: "Update Value", text: "Change '$name' to : ", defaultValue: old_value);
-    if (newValue.isEmpty) return;
+    final String? newValue = await alertInput<String>(context, title: "Update Value", text: "Change '$name' to : ", defaultValue: old_value);
+
+    if (newValue == null) return;
 
     await updateValue(key, newValue);
   }
@@ -41,16 +46,27 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 
     await updateValue(key, newValue);
   }
+  Future<void> button_openLink(String link) async {
+    final Uri url = Uri.parse(link);
+    try {
+      if (!await launchUrl(url)) {
+        if (mounted) alert(context, text: "Could not launch link '$link' in browser!");
+      }
+    } catch (err) {
+      if (mounted) alert(context, text: "Could not launch link '$link' in browser!");
+    }
+  }
 
   Future<void> updateValue(String key, dynamic value) async {
     final map = manga.toMap();
     map[key] = value;
+    final Manga tmpManga = Manga.fromMap(map);
     setState(() {
-      manga = Manga.fromMap(map);
+      manga = tmpManga;
     });
 
     final db = DatabaseHandler();
-    await db.updateManga(manga);
+    await db.updateManga(tmpManga);
     db.notifyUpdate(DatabaseTables.mangas);
   }
 
@@ -58,6 +74,7 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
   void initState() {
     setState(() {
       manga = widget.manga;
+			ratingBuffer = (widget.manga.rating == -1) ? 0 : widget.manga.rating;
     });
     super.initState();
   }
@@ -72,11 +89,12 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
           MangaCard(manga: manga),
           SizedBox(height: 12),
           editing ? _editDisplay() : _viewDisplay(),
+					SizedBox(height: 64),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: button_toggleEdit,
-        child: Icon(editing ? Icons.visibility_off : Icons.visibility),
+        child: Icon(editing ? Icons.edit_off : Icons.edit),
       ),
     );
   }
@@ -91,6 +109,7 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
       _textInfoCard(title: "Image Link", key: "img_link", value: manga.img_link),
       _numberInfoCard(title: "Chapter Count", key: "chapter_count", value: manga.chapter_count),
       _mangaLengthCard(),
+      _ratingCard(editable: true),
     ];
 
     return AppCardSplash(
@@ -103,25 +122,25 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
       ),
     );
   }
-  Widget _textInfoCard({required String title, required String key, required String value}) {
+  Widget _textInfoCard({required String title, String key = "", required String value}) {
     return ListTile(
-      onTap: () => button_editString(title, key, value),
+      onTap: key.isNotEmpty ? () => button_editString(title, key, value) : null,
       contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       title: Text(title),
       subtitle: value.isEmpty ? const Text("Not Provided") : Text(value),
     );
   }
-  Widget _numberInfoCard({required String title, required String key, required int value}) {
+  Widget _numberInfoCard({required String title, String key = "", required int value}) {
     return ListTile(
-      onTap: () => button_editNumber(title, key, value),
+      onTap: key.isNotEmpty ? () => button_editNumber(title, key, value) : null,
       contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       title: Text(title),
       subtitle: Text(value.toString()),
     );
   }
-  Widget _mangaLengthCard() {
+  Widget _mangaLengthCard({ bool editable = false }) {
     return ListTile(
-      onTap: () => selectPageInput(
+      onTap: editable ? () => selectPageInput(
         context, 
         title: "Manga Length", 
         selected: manga.length.toString(), 
@@ -129,14 +148,73 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
         onSelectIndex: (int index) {
           updateValue("length", MangaLength.values[index]);
         }
-      ),
+      ) : null,
       contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       title: Text("Manga Length"),
       subtitle: Text(manga.length.toString()),
     );
   }
+  Widget _ratingCard({ bool editable = false }) {
+    return Column(
+			mainAxisSize: MainAxisSize.min,
+			children: [
+				ListTile(
+					contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+					title: Text("Rating : ${manga.rating == -1 ? "Off" : "${ratingBuffer.toStringAsFixed(1)}/5.0"}"),
+					trailing: Wrap(
+						spacing: 16,
+						children: [
+							if (manga.rating != -1 && !editable) StarRating(value: manga.rating),
+							editable ? Switch(
+								value: (manga.rating != -1), 
+								onChanged: (bool toggled) {
+									if (manga.rating == -1) {
+										updateValue("rating", (ratingBuffer*10).round()/10);
+									} else {
+										updateValue("rating", -1.0);
+									}
+								}
+							) : SizedBox(width: 24)
+						],
+					),
+				),
+				if (editable && manga.rating != -1) ...[
+					StarRating(value: ratingBuffer),
+          Slider(
+            min: 0,
+            max: 5,
+            value: ratingBuffer, 
+            onChanged: (newValue) {
+              setState(() {
+                ratingBuffer = newValue;
+              });
+            },
+						onChangeEnd: (newValue) {
+							setState(() {
+							  updateValue("rating", (newValue*10).round()/10);
+							});
+						},
+          )
+				]
+			],
+		);
+  }
 
   Widget _viewDisplay() {
+    final List<Widget> arr = [];
+
+    if (manga.ch_link.isNotEmpty) arr.add(_linkDisplay(title: "Manga (Chinese)", link: manga.ch_link));
+    if (manga.en_link.isNotEmpty) arr.add(_linkDisplay(title: "Manga (English)", link: manga.en_link));
+    if (manga.jp_link.isNotEmpty) arr.add(_linkDisplay(title: "Manga (Japanese)", link: manga.jp_link));
+    if (manga.ch_name.isNotEmpty) arr.add(_textInfoCard(title: "Chinese Name", value: manga.ch_name));
+    if (manga.en_name.isNotEmpty) arr.add(_textInfoCard(title: "English Name", value: manga.en_name));
+    if (manga.jp_name.isNotEmpty) arr.add(_textInfoCard(title: "Japanese Name", value: manga.jp_name));
+    arr.addAll([
+      _numberInfoCard(title: "Chapter Count", value: manga.chapter_count),
+      _mangaLengthCard(),
+      _ratingCard(),
+    ]);
+
     return AppCardSplash(
       child: ListView.separated(
         shrinkWrap: true,
@@ -144,6 +222,18 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
         itemBuilder:(context, index) => arr[index],
         separatorBuilder: (context, index) => Divider(height: 0),
         itemCount: arr.length,
+      ),
+    );
+  }
+  Widget _linkDisplay({required String title, required String link}) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      title: Text(title),
+      trailing: Card(
+        child: TextButton(
+          onPressed: () => button_openLink(link),
+          child: const Text("Open Link")
+        ),
       ),
     );
   }

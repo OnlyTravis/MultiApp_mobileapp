@@ -77,7 +77,7 @@ class Manga {
       "length": length.index,
       "ended": ended?1:0,
     };
-    if (rating != -1) map["rating"] = rating;
+    map["rating"] = rating;
     if (tag_list.isNotEmpty) map["tag_list"] = jsonEncode(tag_list);
     if (img_link.isNotEmpty) map["img_link"] = img_link;
     if (ch_name.isNotEmpty) map["ch_name"] = ch_name;
@@ -101,20 +101,32 @@ class Manga {
 }
 class MangaTag {
   final String name;
+  final int icon;
+  final int count;
   final int id;
-  final int color;
 
   MangaTag({
     required this.name,
+    this.icon = -1,
+    required this.count,
     required this.id,
-    this.color = -1
   });
 
   factory MangaTag.fromMap(Map<String, dynamic> map) {
     return MangaTag(
       name: map["name"] as String, 
+      icon: map["icon"] ?? -1,
+      count: map["count"] as int,
       id: map["id"] as int,
-      color: map["color"] ?? -1
     );
-  } 
+  }
+  Map<String, dynamic> toMap() {
+    final Map<String, dynamic> map = {
+      "name": name,
+      "icon": icon,
+      "count": count,
+      "id": id,
+    };
+    return map;
+  }
 }

@@ -68,7 +68,7 @@ Future<T?> alertInput<T>(BuildContext context, {
     default: throw Exception("Type parameter in alertInput must of type 'int', 'double' or 'String'.");
   }
 
-  String responceText = "";
+  String? responceText;
   TextEditingController controller = TextEditingController(text: defaultValue);
   await showDialog(
     context: context,
@@ -110,10 +110,12 @@ Future<T?> alertInput<T>(BuildContext context, {
     ),
   );
 
+  if (responceText == null) return null;
+
   switch (T) {
     case String: return responceText as T;
-    case int: return int.tryParse(responceText) as T;
-    case double: return double.tryParse(responceText) as T;
+    case int: return int.tryParse(responceText ?? "") as T;
+    case double: return double.tryParse(responceText ?? "") as T;
     default: throw Exception("Type parameter in alertInput must of type 'int', 'double' or 'String'.");
   }
 }
