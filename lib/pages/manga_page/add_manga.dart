@@ -128,6 +128,7 @@ class _AddMangaPageState extends State<AddMangaPage> {
 			),
 		);
 	}
+	
 	Widget _cardTitle({String title = ""}) {
 		return Padding(
 			padding: const EdgeInsets.only(left: 20, top: 8),

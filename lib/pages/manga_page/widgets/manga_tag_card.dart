@@ -6,12 +6,14 @@ import 'package:multi_app/widgets/tag_card.dart';
 
 class MangaTagListCard extends StatefulWidget {
 	final List<MangaTag> tagList;
+	final Widget? title;
 	final Function(List<MangaTag>)? onAddTags;
 	final Function(MangaTag)? onRemoveTag;
 
 	const MangaTagListCard({
 		super.key, 
 		required this.tagList,
+		this.title,
 		this.onAddTags,
 		this.onRemoveTag
 	});
@@ -29,7 +31,7 @@ class _MangaTagListCardState extends State<MangaTagListCard> {
 			context: context,
 			builder: (BuildContext context) => AlertDialog(
 				title: const Text("Select tag(s) to Add"),
-				content: _SelectableTagWrap(
+				content: exclusiveTagList.isEmpty ? const Text("No other tags available to add.") : _SelectableTagWrap(
 					tagList: exclusiveTagList,
 					selectedIndices: selectedTagIndices,
 				),
@@ -85,6 +87,7 @@ class _MangaTagListCardState extends State<MangaTagListCard> {
 				mainAxisSize: MainAxisSize.min,
 				crossAxisAlignment: CrossAxisAlignment.start,
 				children: [
+					if (widget.title != null) widget.title!,
 					Wrap(
 						children: widget.tagList.map((MangaTag tag) => TagCard(
 							name:	tag.name,
@@ -97,7 +100,13 @@ class _MangaTagListCardState extends State<MangaTagListCard> {
 						style: IconButton.styleFrom(
 							backgroundColor: Theme.of(context).colorScheme.secondaryContainer
 						),
-						icon: const Icon(Icons.add),
+						icon: const Row(
+							mainAxisSize: MainAxisSize.min,
+							children: [
+								Text("Add tag"),
+								Icon(Icons.add),
+							],
+						),
 					),
 				],
 			),

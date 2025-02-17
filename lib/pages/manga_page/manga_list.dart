@@ -5,7 +5,7 @@ import 'package:multi_app/code/classes.dart';
 import 'package:multi_app/code/database_handler.dart';
 import 'package:multi_app/pages/manga_page/add_manga.dart';
 import 'package:multi_app/pages/manga_page/view_manga.dart';
-import 'package:multi_app/widgets/manga_card.dart';
+import 'package:multi_app/pages/manga_page/widgets/manga_card.dart';
 
 class MangaListPage extends StatefulWidget {
 	const MangaListPage({super.key});

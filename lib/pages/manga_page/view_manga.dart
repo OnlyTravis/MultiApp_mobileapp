@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:multi_app/code/alert.dart';
 import 'package:multi_app/code/classes.dart';
 import 'package:multi_app/code/database_handler.dart';
+import 'package:multi_app/pages/manga_page/widgets/manga_tag_card.dart';
 import 'package:multi_app/widgets/app_card.dart';
-import 'package:multi_app/widgets/manga_card.dart';
+import 'package:multi_app/pages/manga_page/widgets/manga_card.dart';
 import 'package:multi_app/widgets/page_appbar.dart';
 import 'package:multi_app/widgets/select_page.dart';
 import 'package:multi_app/widgets/star_rating.dart';
@@ -88,10 +89,11 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 
 	@override
 	void initState() {
+		manga = widget.manga;
 		setState(() {
-			manga = widget.manga;
 			ratingBuffer = (widget.manga.rating == -1) ? 0 : widget.manga.rating;
 		});
+		fetchTagList();
 		super.initState();
 	}
 
@@ -103,10 +105,20 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 				padding: const EdgeInsets.all(12),
 				children: [
 					MangaCard(manga: manga),
+
 					const SizedBox(height: 12),
+
 					editing ? _editDisplay() : _viewDisplay(),
+
 					const SizedBox(height: 12),
-					_tagsDisplay(),
+
+					MangaTagListCard(
+						tagList: tagList,
+						title: const Text("Tags : ", textScaler: TextScaler.linear(1.2)),
+						onAddTags: editing ? (List<MangaTag> a) {}: null,
+						onRemoveTag: editing ? (MangaTag a) {}: null,
+					),
+
 					const SizedBox(height: 64),
 				],
 			),
@@ -252,40 +264,6 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 					onPressed: () => button_openLink(link),
 					child: const Text("Open Link")
 				),
-			),
-		);
-	}
-
-	Widget _tagsDisplay() {
-		return AppCard(
-			padding: const EdgeInsets.all(8),
-			child: Column(
-				mainAxisSize: MainAxisSize.min,
-				crossAxisAlignment: CrossAxisAlignment.start,
-				children: [
-					const Text("Tags : ", textScaler: TextScaler.linear(1.3)),
-					Wrap(
-						children: [
-							...tagList.map((MangaTag tag) => _tagCard(tag))
-						],
-					),
-					_addTagButton()
-				],
-			),
-		);
-	}
-	Widget _tagCard(MangaTag tag) {
-		return Card(
-			child: Text(tag.name),
-		);
-	}
-	Widget _addTagButton() {
-		return InkWell(
-			onTap: () {},
-			child: AppCardSplash(
-				color: Theme.of(context).colorScheme.primaryContainer,
-				padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-				child: const Icon(Icons.add)
 			),
 		);
 	}

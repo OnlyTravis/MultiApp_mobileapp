@@ -13,6 +13,7 @@ class MangaCard extends StatelessWidget {
 	@override
 	Widget build(BuildContext context) {
 		return AppCardSplash(
+			margin: const EdgeInsets.symmetric(vertical: 4),
 			child: InkWell(
 				onTap: (onTap == null) ? null : () => onTap!(manga),
 				child: Row(
