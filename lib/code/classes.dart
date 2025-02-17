@@ -125,4 +125,9 @@ class MangaTag {
 		};
 		return map;
 	}
+
+	@override
+  String toString() {
+    return "MangaTag(name : $name, count : $count, id : $id)";
+  }
 }
