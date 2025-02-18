@@ -31,7 +31,7 @@ Future<bool> confirm(BuildContext context, {
 	return confirmed;
 }
 
-void alert(BuildContext context, {
+void alertSnackbar(BuildContext context, {
 	String text = "",
 	int duration = 1,
 }) {

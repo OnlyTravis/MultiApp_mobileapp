@@ -37,13 +37,13 @@ class _AddMangaPageState extends State<AddMangaPage> {
 			}
 		}
 		if (failed) {
-			alert(context, text: "Please enter atleast 1 valid manga name.");
+			alertSnackbar(context, text: "Please enter atleast 1 valid manga name.");
 			return false;
 		}
 
 		// Number of Chapters
 		if (chapterCountController.text.isEmpty) {
-			alert(context, text: "Please Enter Number of Chapters");
+			alertSnackbar(context, text: "Please Enter Number of Chapters");
 			return false;
 		}
 
@@ -80,7 +80,7 @@ class _AddMangaPageState extends State<AddMangaPage> {
 
 		// 4. Alert + pop navigation route
 		if (mounted) {
-			alert(context, text: "Manga Added !");
+			alertSnackbar(context, text: "Manga Added !");
 			Navigator.pop(context);
 			db.notifyUpdate(DatabaseTables.mangas);
 			if (tagList.isNotEmpty) db.notifyUpdate(DatabaseTables.mangaTags);

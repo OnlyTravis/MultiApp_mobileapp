@@ -7,6 +7,7 @@ import 'package:multi_app/widgets/tag_card.dart';
 class MangaTagListCard extends StatefulWidget {
 	final List<MangaTag> tagList;
 	final Widget? title;
+	final Widget? emptyText;
 	final Function(List<MangaTag>)? onAddTags;
 	final Function(MangaTag)? onRemoveTag;
 
@@ -14,6 +15,7 @@ class MangaTagListCard extends StatefulWidget {
 		super.key, 
 		required this.tagList,
 		this.title,
+		this.emptyText,
 		this.onAddTags,
 		this.onRemoveTag
 	});
@@ -88,7 +90,7 @@ class _MangaTagListCardState extends State<MangaTagListCard> {
 				crossAxisAlignment: CrossAxisAlignment.start,
 				children: [
 					if (widget.title != null) widget.title!,
-					Wrap(
+					(widget.tagList.isEmpty && widget.emptyText != null) ? widget.emptyText! : Wrap(
 						children: widget.tagList.map((MangaTag tag) => TagCard(
 							name:	tag.name,
 							count: tag.count,

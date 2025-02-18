@@ -85,15 +85,30 @@ class DatabaseHandler {
 	Future<void> createManga(Manga manga) async {
 		final map = manga.toMap();
 		map["id"] = null;
-		await db.insert("Mangas", map);
+		await db.insert(DatabaseTables.mangas.toString(), map);
 	}
 	Future<void> updateManga(Manga manga) async {
-		await db.update("Mangas", manga.toMap(), where: "id = ${manga.id}");
+		await db.update(DatabaseTables.mangas.toString(), manga.toMap(), where: "id = ${manga.id}");
+	}
+	Future<void> deleteManga(Manga manga) async {
+		// 1. Delete manga record
+		await db.delete(
+			DatabaseTables.mangas.toString(),
+			where: "id = ?",
+			whereArgs: [manga.id],
+		);
+
+		// 2. Update Tags counts
+		for (final tagId in manga.tag_list) {
+			await db.rawUpdate('''
+				UPDATE ${DatabaseTables.mangaTags} 
+				SET count = count - 1
+				WHERE id = $tagId;
+			''');
+		}
 	}
 	Future<List<Manga>> getAllManga() async {
-		final results = await db.rawQuery('''
-			SELECT * FROM Mangas;
-		''');
+		final results = await db.query(DatabaseTables.mangas.toString());
 
 		List<Manga> arr = [];
 		for (final result in results) {
@@ -101,18 +116,49 @@ class DatabaseHandler {
 		}
 		return arr;
 	}
+	Future<List<Manga>> getMangasFromTag(MangaTag tag) async {
+		final results = await db.query(
+			DatabaseTables.mangas.toString(),
+			where: "tag_list like '%,${tag.id},%'"
+		);
+		List<Manga> returnArr = [];
+		for (final result in results) {
+			returnArr.add(Manga.fromMap(result));
+		}
+		return returnArr;
+	}
 
 	Future<void> createMangaTag(MangaTag tag) async {
 		final map = tag.toMap();
 		map["id"] = null;
-		await db.insert("MangaTags", map);
+		await db.insert(
+			DatabaseTables.mangaTags.toString(), 
+			map
+		);
 	}
 	Future<void> updateMangaTag(MangaTag tag) async {
-		await db.update("MangaTags", tag.toMap(), where: "id = ${tag.id}");
+		await db.update(
+			DatabaseTables.mangaTags.toString(), 
+			tag.toMap(), 
+			where: "id = ${tag.id}"
+		);
 	}
+	Future<void> deleteMangaTag(int id) async {
+		// 1. Remove tag from database
+		await db.delete(
+			DatabaseTables.mangaTags.toString(), 
+			where: "id = $id",
+		);
+
+		// 2. Update Mangas with that tag
+		//WIP
+	} 
 	Future<MangaTag?> getMangaTagFromId(int id) async {
 		try {
-			final result = await db.query(DatabaseTables.mangaTags.toString(), where: "id = $id");
+			final result = await db.query(
+				DatabaseTables.mangaTags.toString(), 
+				where: "id = $id"
+			);
 
 			return MangaTag.fromMap(result.first);
 		} catch (err) {
@@ -120,9 +166,7 @@ class DatabaseHandler {
 		}
 	}
 	Future<List<MangaTag>> getAllMangaTag() async {
-		final results = await db.rawQuery('''
-			SELECT * FROM MangaTags;
-		''');
+		final results = await db.query(DatabaseTables.mangaTags.toString());
 
 		List<MangaTag> arr = [];
 		for (final result in results) {

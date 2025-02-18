@@ -53,10 +53,69 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 		final Uri url = Uri.parse(link);
 		try {
 			if (!await launchUrl(url)) {
-				if (mounted) alert(context, text: "Could not launch link '$link' in browser!");
+				if (mounted) alertSnackbar(context, text: "Could not launch link '$link' in browser!");
 			}
 		} catch (err) {
-			if (mounted) alert(context, text: "Could not launch link '$link' in browser!");
+			if (mounted) alertSnackbar(context, text: "Could not launch link '$link' in browser!");
+		}
+	}
+	Future<void> button_onAddTags(List<MangaTag> addTagList) async {
+		if (addTagList.isEmpty) return;
+
+		// 1. Update Manga record in database
+		final db = DatabaseHandler();
+		manga.tag_list.addAll(addTagList.map((MangaTag tag) => tag.id));
+		await db.updateManga(manga);
+
+		// 2. Update MangaTag records in database
+		for (final tag in addTagList) {
+			await db.updateMangaTag(tag);
+		}
+
+		// 3. Broadcast change, notify user & update UI
+		db.notifyUpdate(DatabaseTables.mangas);
+		db.notifyUpdate(DatabaseTables.mangaTags);
+		if (mounted) alertSnackbar(context, text: "Tags added to manga!");
+		setState(() {
+		  tagList.addAll(addTagList);
+		});
+	}
+	Future<void> button_onRemoveTag(MangaTag removeTag) async {
+		// 1. Update Manga record in database
+		final db = DatabaseHandler();
+		if (!manga.tag_list.remove(removeTag.id)) return;
+		await db.updateManga(manga);
+
+		// 2. Update MangaTag records in database & tagList
+		int index = tagList.indexWhere((MangaTag tag) => tag.id == removeTag.id);
+		tagList[index].count--;
+		await db.updateMangaTag(tagList[index]);
+		setState(() {
+		  tagList.removeAt(index);
+		});
+
+		// 3. Update UI & broadcast change
+		db.notifyUpdate(DatabaseTables.mangas);
+		db.notifyUpdate(DatabaseTables.mangaTags);
+	}
+	Future<void> button_onDeleteManga() async {
+		// 1. Confirmation
+		final bool confrimation = await confirm(
+			context,
+			title: "Confirm Delete",
+			text: "Are you sure you want to delete this Manga?"
+		);
+		if (!confrimation) return;
+
+		// 2. Remove Manga record from database
+		final db = DatabaseHandler();
+		await db.deleteManga(manga);
+		db.notifyUpdate(DatabaseTables.mangas);
+
+		// 3. Alert user, pop navigation
+		if (mounted) {
+			alertSnackbar(context, text: "Manga '${manga.topName()}' removed!");
+			Navigator.of(context).pop();
 		}
 	}
 
@@ -105,20 +164,18 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 				padding: const EdgeInsets.all(12),
 				children: [
 					MangaCard(manga: manga),
-
 					const SizedBox(height: 12),
-
 					editing ? _editDisplay() : _viewDisplay(),
-
 					const SizedBox(height: 12),
-
 					MangaTagListCard(
 						tagList: tagList,
 						title: const Text("Tags : ", textScaler: TextScaler.linear(1.2)),
-						onAddTags: editing ? (List<MangaTag> a) {}: null,
-						onRemoveTag: editing ? (MangaTag a) {}: null,
+						emptyText: editing ? null : const Text("No Tag Added", textScaler: TextScaler.linear(1.1)),
+						onAddTags: editing ? button_onAddTags : null,
+						onRemoveTag: editing ? button_onRemoveTag : null,
 					),
-
+					const SizedBox(height: 12),
+					_deleteMangaCard(),
 					const SizedBox(height: 64),
 				],
 			),
@@ -263,6 +320,34 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 				child: TextButton(
 					onPressed: () => button_openLink(link),
 					child: const Text("Open Link")
+				),
+			),
+		);
+	}
+
+	Widget _deleteMangaCard() {
+		return AppCardSplash(
+			child: InkWell(
+				onTap: button_onDeleteManga,
+				child: Padding(
+					padding: const EdgeInsets.all(8),
+					child: Row(
+						mainAxisAlignment: MainAxisAlignment.center,
+						children: [
+							Icon(
+								Icons.delete,
+								size: 20,
+								color: Theme.of(context).colorScheme.primary,
+							),
+							Text(
+								"Delete Manga",
+								style: TextStyle(
+									color: Theme.of(context).colorScheme.primary,
+									fontWeight: FontWeight.bold
+								),
+							),
+						],
+					),
 				),
 			),
 		);

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:multi_app/code/alert.dart';
 import 'package:multi_app/code/classes.dart';
@@ -12,6 +14,7 @@ class TagListPage extends StatefulWidget {
 	State<TagListPage> createState() => _TagListPageState();
 }
 class _TagListPageState extends State<TagListPage> {
+	late StreamSubscription streamSubscription;
 	List<MangaTag> tagList = [];
 
 	Future<void> button_onAddTag() async {
@@ -56,12 +59,24 @@ class _TagListPageState extends State<TagListPage> {
 			tagList = tmpList;
 		});
 	}
+	void listenForUpdate() {
+		final db = DatabaseHandler();
+		streamSubscription = db.streams[DatabaseTables.mangaTags]!.listen((_) {
+			updateTagList();
+		});
+	}
 
 	@override
 	void initState() {
 		updateTagList();
+		listenForUpdate();
 		super.initState();
 	}
+	@override
+  void dispose() {
+    streamSubscription.cancel();
+		super.dispose();
+  }
 
 	@override
 	Widget build(BuildContext context) {
@@ -83,7 +98,7 @@ class _TagListPageState extends State<TagListPage> {
 				onTap: () => button_onViewTag(tag),
 				child: ListTile(
 					title: Text(tag.name),
-					subtitle: Text("Used in ${tag.count} mangas"),
+					subtitle: Text("Used in ${tag.count} manga${tag.count > 1 ? "s" : ""}"),
 					trailing: Wrap(
 						children: [
 							IconButton(
