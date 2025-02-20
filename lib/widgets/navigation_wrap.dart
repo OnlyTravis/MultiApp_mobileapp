@@ -14,7 +14,7 @@ class NavigationWrap extends StatefulWidget {
 	State<NavigationWrap> createState() => _NavigationWrapState();
 }
 class _NavigationWrapState extends State<NavigationWrap> with TickerProviderStateMixin {
-	final List<TabData> tabList = [
+	final List<TabData> _tabList = [
 		const TabData(title: "Home", page: Pages.homePage),
 		const TabData(title: "Manga", page: Pages.mangaPage),
 		...List.generate(10, (int index) => TabData(title: "Item $index", page: Pages.none))
@@ -24,7 +24,7 @@ class _NavigationWrapState extends State<NavigationWrap> with TickerProviderStat
 	Widget build(BuildContext context) {
 		return DefaultTabController(
 			initialIndex: 0,
-			length: tabList.length, 
+			length: _tabList.length, 
 			child: Scaffold(
 				appBar: AppBar(
 					backgroundColor: Theme.of(context).colorScheme.primaryContainer,
@@ -32,7 +32,7 @@ class _NavigationWrapState extends State<NavigationWrap> with TickerProviderStat
 					bottom: _navigationBar()
 				),
 				body: TabBarView(
-					children: tabList.map((TabData tab) => toPage(tab.page)).toList(),
+					children: _tabList.map((TabData tab) => toPage(tab.page)).toList(),
 				),
 			),
 		);
@@ -43,7 +43,7 @@ class _NavigationWrapState extends State<NavigationWrap> with TickerProviderStat
 			physics: const BouncingScrollPhysics(),
 			isScrollable: true,
 			tabAlignment: TabAlignment.center,
-			tabs: tabList.map((TabData tab) => Tab(
+			tabs: _tabList.map((TabData tab) => Tab(
 				text: tab.title,
 			)).toList()
 		);

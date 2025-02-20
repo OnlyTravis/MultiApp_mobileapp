@@ -58,6 +58,9 @@ class DatabaseHandler {
 				chapter_count INTEGER,
 				length INTEGER,
 				ended INTEGER,
+
+				time_added INTEGER,
+				time_last_read INTEGER,
 				
 				id INTEGER PRIMARY KEY AUTOINCREMENT
 			);

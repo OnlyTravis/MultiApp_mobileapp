@@ -24,23 +24,23 @@ class MangaTagListCard extends StatefulWidget {
   State<MangaTagListCard> createState() => _MangaTagListCardState();
 }
 class _MangaTagListCardState extends State<MangaTagListCard> {
-	List<MangaTag> allTagList = [];
-	List<MangaTag> exclusiveTagList = [];
+	List<MangaTag> _allTagList = [];
+	List<MangaTag> _exclusiveTagList = [];
 
-	Future<void> button_onAddTag(BuildContext context) async {
+	Future<void> _onAddTag(BuildContext context) async {
 		List<int> selectedTagIndices = [];
 		await showDialog(
 			context: context,
 			builder: (BuildContext context) => AlertDialog(
 				title: const Text("Select tag(s) to Add"),
-				content: exclusiveTagList.isEmpty ? const Text("No other tags available to add.") : _SelectableTagWrap(
-					tagList: exclusiveTagList,
+				content: _exclusiveTagList.isEmpty ? const Text("No other tags available to add.") : _SelectableTagWrap(
+					tagList: _exclusiveTagList,
 					selectedIndices: selectedTagIndices,
 				),
 				actions: [
 					TextButton(
 						onPressed: () {
-							widget.onAddTags!(selectedTagIndices.map((int index) => exclusiveTagList[index]).toList());
+							widget.onAddTags!(selectedTagIndices.map((int index) => _exclusiveTagList[index]).toList());
 							Navigator.pop(context);
 						},
 						child: const Text('Add'),
@@ -56,19 +56,19 @@ class _MangaTagListCardState extends State<MangaTagListCard> {
 		);
 	}
 
-	Future<void> fetchTagList() async {
+	Future<void> _fetchTagList() async {
 		final db = DatabaseHandler();
 		final tmpAllTagList = await db.getAllMangaTag();
 		final tagIdList = widget.tagList.map((MangaTag tag) => tag.id).toList();
 		setState(() {
-			allTagList = tmpAllTagList;
-			exclusiveTagList = tmpAllTagList.where((MangaTag tag) => !tagIdList.contains(tag.id)).toList();
+			_allTagList = tmpAllTagList;
+			_exclusiveTagList = tmpAllTagList.where((MangaTag tag) => !tagIdList.contains(tag.id)).toList();
 		});
 	}
 
 	@override
   void initState() {
-    fetchTagList();
+    _fetchTagList();
     super.initState();
   }
 
@@ -76,7 +76,7 @@ class _MangaTagListCardState extends State<MangaTagListCard> {
   void didUpdateWidget(covariant MangaTagListCard oldWidget) {
     final tagIdList = widget.tagList.map((MangaTag tag) => tag.id).toList();
 		setState(() {
-			exclusiveTagList = allTagList.where((MangaTag tag) => !tagIdList.contains(tag.id)).toList();
+			_exclusiveTagList = _allTagList.where((MangaTag tag) => !tagIdList.contains(tag.id)).toList();
 		});
     super.didUpdateWidget(oldWidget);
   }
@@ -98,7 +98,7 @@ class _MangaTagListCardState extends State<MangaTagListCard> {
 						)).toList(),
 					),
 					if (widget.onAddTags != null) IconButton(
-						onPressed: () => button_onAddTag(context),
+						onPressed: () => _onAddTag(context),
 						style: IconButton.styleFrom(
 							backgroundColor: Theme.of(context).colorScheme.secondaryContainer
 						),

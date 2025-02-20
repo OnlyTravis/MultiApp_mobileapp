@@ -31,10 +31,10 @@ class SelectPage extends StatefulWidget {
 	State<SelectPage> createState() => _SelectPageState();
 }
 class _SelectPageState extends State<SelectPage> {
-	String selected = "";
-	void button_onTap(int index) {
+	String _selected = "";
+	void _onTap(int index) {
 		setState(() {
-			selected = widget.inputList[index];
+			_selected = widget.inputList[index];
 		});
 		widget.onSelectIndex!(index);
 		Navigator.of(context).pop();
@@ -42,9 +42,9 @@ class _SelectPageState extends State<SelectPage> {
 
 	@override
 	void initState() {
-		if (!widget.inputList.contains(selected)) assert(!widget.inputList.contains(selected), 'The expected element is not in the list. (SelectPage)');
+		if (!widget.inputList.contains(_selected)) assert(!widget.inputList.contains(_selected), 'The expected element is not in the list. (SelectPage)');
 		setState(() {
-			selected = widget.selected;
+			_selected = widget.selected;
 		});
 		super.initState();
 	}
@@ -72,9 +72,9 @@ class _SelectPageState extends State<SelectPage> {
 								itemCount: widget.inputList.length,
 								separatorBuilder: (context, index) => const Divider(height: 0, indent: 56),
 								itemBuilder: (context, index) => ListTile(
-									leading: Icon((widget.inputList[index] == selected)?Icons.radio_button_checked:Icons.radio_button_off),
+									leading: Icon((widget.inputList[index] == _selected)?Icons.radio_button_checked:Icons.radio_button_off),
 									title: Text(widget.inputList[index]),
-									onTap: () => button_onTap(index),
+									onTap: () => _onTap(index),
 								),
 							),
 						),

@@ -13,31 +13,31 @@ class ViewTagPage extends StatefulWidget {
   State<ViewTagPage> createState() => _ViewTagPage();
 }
 class _ViewTagPage extends State<ViewTagPage> {
-	late MangaTag tag;
-	List<Manga> mangaList = [];
+	late MangaTag _tag;
+	List<Manga> _mangaList = [];
 
-	Future<void> button_onRenameTag() async {
+	Future<void> _onRenameTag() async {
 		// 1. Ask for name input
 		String newTagName = (await alertInput<String>(context, 
 			title: "Rename Tag",
-			text: "Rename Tag '${tag.name}' to : ", 
+			text: "Rename Tag '${_tag.name}' to : ", 
 			placeHolder: "Enter Tag Name Here"
 		) ?? "").trim();
-		if (newTagName.isEmpty || tag.name == newTagName) return;
+		if (newTagName.isEmpty || _tag.name == newTagName) return;
 
 		// 2. Update tag in database
-		tag.name = newTagName;
+		_tag.name = newTagName;
 		final db = DatabaseHandler();
-		await db.updateMangaTag(tag);
+		await db.updateMangaTag(_tag);
 		db.notifyUpdate(DatabaseTables.mangaTags);
 
 		// 3. Update UI & notify user
 		setState(() {
-			tag.name = newTagName;
+			_tag.name = newTagName;
 		});
 		if (mounted) alertSnackbar(context, text: "Tag renamed to '$newTagName'!");
 	}
-	Future<void> button_onDeleteTag() async {
+	Future<void> _onDeleteTag() async {
 		// 1. Confirmation
 		bool confirmation = await confirm(
 			context, 
@@ -48,29 +48,29 @@ class _ViewTagPage extends State<ViewTagPage> {
 
 		// 2. Remove tag from database
 		final db = DatabaseHandler();
-		await db.deleteMangaTag(tag);
+		await db.deleteMangaTag(_tag);
 		db.notifyUpdate(DatabaseTables.mangaTags);
 
 		// 3. Navigate back to tag list page
 		if (mounted) {
-			alertSnackbar(context, text: "Tag '${tag.name}' deleted!");
+			alertSnackbar(context, text: "Tag '${_tag.name}' deleted!");
 			Navigator.of(context).pop();
 		}
 	}
 
-	Future<void> fetchMangaList() async {
+	Future<void> _fetchMangaList() async {
 		final db = DatabaseHandler();
 		final tmpList = await db.getMangasFromTag(widget.tag);
 		setState(() {
-		  mangaList = tmpList;
+		  _mangaList = tmpList;
 		});
 	}
 
 	@override
   void initState() {
-		fetchMangaList();
+		_fetchMangaList();
     setState(() {
-      tag = widget.tag;
+      _tag = widget.tag;
     });
 		super.initState();
   }
@@ -78,7 +78,7 @@ class _ViewTagPage extends State<ViewTagPage> {
 	@override
   Widget build(BuildContext context) {
     return Scaffold(
-			appBar: PageAppBar(title: tag.name),
+			appBar: PageAppBar(title: _tag.name),
 			body: ListView(
 				padding: const EdgeInsets.all(4),
 				children: [
@@ -96,16 +96,16 @@ class _ViewTagPage extends State<ViewTagPage> {
 				children: [
 					ListTile(
 						title: const Text("Tag Name"),
-						subtitle: Text(tag.name),
+						subtitle: Text(_tag.name),
 						trailing: IconButton(
-							onPressed: button_onRenameTag, 
+							onPressed: _onRenameTag, 
 							icon: const Icon(Icons.drive_file_rename_outline)
 						),
 					),
 					const Divider(height: 0),
 					ListTile(
 						title: const Text("Used in"),
-						subtitle: Text(tag.count.toString()),
+						subtitle: Text(_tag.count.toString()),
 					)
 				],
 			),
@@ -132,9 +132,9 @@ class _ViewTagPage extends State<ViewTagPage> {
 								padding: const EdgeInsets.all(8),
 								margin: const EdgeInsets.all(4),
 								color: Theme.of(context).colorScheme.secondaryContainer,
-								child: Text("$index. ${mangaList[index].topName()}"),
+								child: Text("$index. ${_mangaList[index].topName()}"),
 							),
-							itemCount: mangaList.length,
+							itemCount: _mangaList.length,
 						),
 					),
 				],
@@ -145,7 +145,7 @@ class _ViewTagPage extends State<ViewTagPage> {
 		return AppCardSplash(
 			margin: const EdgeInsets.all(8),
 			child: InkWell(
-				onTap: button_onDeleteTag,
+				onTap: _onDeleteTag,
 				child: Padding(
 					padding: const EdgeInsets.all(8),
 					child: Row(

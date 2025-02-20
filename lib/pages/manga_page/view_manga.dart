@@ -18,38 +18,42 @@ class ViewMangaPage extends StatefulWidget {
 	State<ViewMangaPage> createState() => _ViewMangaPageState();
 }
 class _ViewMangaPageState extends State<ViewMangaPage> {
-	late Manga manga;
-	List<MangaTag> tagList = [];
+	late Manga _manga;
+	List<MangaTag> _tagList = [];
 	
-	bool editing = false;
+	bool _editing = false;
 
-	double ratingBuffer = 0;
+	double _ratingBuffer = 0;
 
-	void button_toggleEdit() {
+	void _toggleEdit() {
 		setState(() {
-			editing = !editing;
+			_editing = !_editing;
 		});
 	}
-	Future<void> button_editString(String name, String key, String old_value) async {
-		final String? newValue = await alertInput<String>(context, title: "Update Value", text: "Change '$name' to : ", defaultValue: old_value);
+	Future<void> _editString(String name, String key, String old_value) async {
+		final String? newValue = await alertInput<String>(
+			context, 
+			title: "Update Value", 
+			text: "Change '$name' to : ", 
+			defaultValue: old_value
+		);
 
 		if (newValue == null) return;
 
-		await updateValue(key, newValue);
+		await _updateValue(key, newValue);
 	}
-	Future<void> button_editNumber(String name, String key, int old_value) async {
-		final int? newValue = await alertInput<int>(context, title: "Update Value", text: "Change '$name' to : ", defaultValue: old_value.toString());
+	Future<void> _editNumber(String name, String key, int old_value) async {
+		final int? newValue = await alertInput<int>(
+			context, 
+			title: "Update Value", 
+			text: "Change '$name' to : ", 
+			defaultValue: old_value.toString()
+		);
 		if (newValue == null) return;
 
-		await updateValue(key, newValue);
+		await _updateValue(key, newValue);
 	}
-	Future<void> button_editMangaLength(String name, String key, int old_value) async {
-		final int? newValue = await alertInput<int>(context, title: "Update Value", text: "Change '$name' to : ", defaultValue: old_value.toString());
-		if (newValue == null) return;
-
-		await updateValue(key, newValue);
-	}
-	Future<void> button_openLink(String link) async {
+	Future<void> _openLink(String link) async {
 		final Uri url = Uri.parse(link);
 		try {
 			if (!await launchUrl(url)) {
@@ -59,13 +63,13 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 			if (mounted) alertSnackbar(context, text: "Could not launch link '$link' in browser!");
 		}
 	}
-	Future<void> button_onAddTags(List<MangaTag> addTagList) async {
+	Future<void> _onAddTags(List<MangaTag> addTagList) async {
 		if (addTagList.isEmpty) return;
 
 		// 1. Update Manga record in database
 		final db = DatabaseHandler();
-		manga.tag_list.addAll(addTagList.map((MangaTag tag) => tag.id));
-		await db.updateManga(manga);
+		_manga.tag_list.addAll(addTagList.map((MangaTag tag) => tag.id));
+		await db.updateManga(_manga);
 
 		// 2. Update MangaTag records in database
 		for (final tag in addTagList) {
@@ -77,28 +81,28 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 		db.notifyUpdate(DatabaseTables.mangaTags);
 		if (mounted) alertSnackbar(context, text: "Tags added to manga!");
 		setState(() {
-		  tagList.addAll(addTagList);
+		  _tagList.addAll(addTagList);
 		});
 	}
-	Future<void> button_onRemoveTag(MangaTag removeTag) async {
+	Future<void> _onRemoveTag(MangaTag removeTag) async {
 		// 1. Update Manga record in database
 		final db = DatabaseHandler();
-		if (!manga.tag_list.remove(removeTag.id)) return;
-		await db.updateManga(manga);
+		if (!_manga.tag_list.remove(removeTag.id)) return;
+		await db.updateManga(_manga);
 
 		// 2. Update MangaTag records in database & tagList
-		int index = tagList.indexWhere((MangaTag tag) => tag.id == removeTag.id);
-		tagList[index].count--;
-		await db.updateMangaTag(tagList[index]);
+		int index = _tagList.indexWhere((MangaTag tag) => tag.id == removeTag.id);
+		_tagList[index].count--;
+		await db.updateMangaTag(_tagList[index]);
 		setState(() {
-		  tagList.removeAt(index);
+		  _tagList.removeAt(index);
 		});
 
 		// 3. Update UI & broadcast change
 		db.notifyUpdate(DatabaseTables.mangas);
 		db.notifyUpdate(DatabaseTables.mangaTags);
 	}
-	Future<void> button_onDeleteManga() async {
+	Future<void> _onDeleteManga() async {
 		// 1. Confirmation
 		final bool confrimation = await confirm(
 			context,
@@ -109,70 +113,70 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 
 		// 2. Remove Manga record from database
 		final db = DatabaseHandler();
-		await db.deleteManga(manga);
+		await db.deleteManga(_manga);
 		db.notifyUpdate(DatabaseTables.mangas);
 
 		// 3. Alert user, pop navigation
 		if (mounted) {
-			alertSnackbar(context, text: "Manga '${manga.topName()}' removed!");
+			alertSnackbar(context, text: "Manga '${_manga.topName()}' removed!");
 			Navigator.of(context).pop();
 		}
 	}
 
-	Future<void> updateValue(String key, dynamic value) async {
-		final map = manga.toMap();
+	Future<void> _updateValue(String key, dynamic value) async {
+		final map = _manga.toMap();
 		map[key] = value;
 		final Manga tmpManga = Manga.fromMap(map);
 		setState(() {
-			manga = tmpManga;
+			_manga = tmpManga;
 		});
 
 		final db = DatabaseHandler();
 		await db.updateManga(tmpManga);
 		db.notifyUpdate(DatabaseTables.mangas);
 	}
-	Future<void> fetchTagList() async {
+	Future<void> _fetchTagList() async {
 		final db = DatabaseHandler();
 
 		List<MangaTag> tmpList = [];
-		for (final int id in manga.tag_list) {
+		for (final int id in _manga.tag_list) {
 			final MangaTag? tag = await db.getMangaTagFromId(id);
 			if (tag == null) throw ErrorDescription("MangaTag with id $id cannot be found in database.");
 			tmpList.add(tag);
 		}
 
 		setState(() {
-			tagList = tmpList;
+			_tagList = tmpList;
 		});
 	}
 
 	@override
 	void initState() {
-		manga = widget.manga;
+		_manga = widget.manga;
 		setState(() {
-			ratingBuffer = (widget.manga.rating == -1) ? 0 : widget.manga.rating;
+			_ratingBuffer = (widget.manga.rating == -1) ? 0 : widget.manga.rating;
 		});
-		fetchTagList();
+		_fetchTagList();
 		super.initState();
 	}
 
 	@override 
 	Widget build(BuildContext context) {
 		return Scaffold(
-			appBar: PageAppBar(title: manga.topName()),
+			appBar: PageAppBar(title: _manga.topName()),
 			body: ListView(
 				padding: const EdgeInsets.all(12),
 				children: [
-					MangaCard(manga: manga),
+					MangaCard(manga: _manga),
 					const SizedBox(height: 12),
-					editing ? _editDisplay() : _viewDisplay(),
+					_editing ? _editDisplay() : _viewDisplay(),
 					const SizedBox(height: 12),
 					MangaTagListCard(
-						tagList: tagList,
+						tagList: _tagList,
 						title: const Text("Tags : ", textScaler: TextScaler.linear(1.2)),
-						emptyText: editing ? null : const Text("No Tag Added", textScaler: TextScaler.linear(1.1)),
-						onAddTags: editing ? button_onAddTags : null,
-						onRemoveTag: editing ? button_onRemoveTag : null,
+						emptyText: _editing ? null : const Text("No Tag Added", textScaler: TextScaler.linear(1.1)),
+						onAddTags: _editing ? _onAddTags : null,
+						onRemoveTag: _editing ? _onRemoveTag : null,
 					),
 					const SizedBox(height: 12),
 					_deleteMangaCard(),
@@ -180,21 +184,21 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 				],
 			),
 			floatingActionButton: FloatingActionButton(
-				onPressed: button_toggleEdit,
-				child: Icon(editing ? Icons.edit_off : Icons.edit),
+				onPressed: _toggleEdit,
+				child: Icon(_editing ? Icons.edit_off : Icons.edit),
 			),
 		);
 	}
 	Widget _editDisplay() {
 		final List<Widget> arr = [
-			_textInfoCard(title: "Chinese Name", key: "ch_name", value: manga.ch_name),
-			_textInfoCard(title: "English Name", key: "en_name", value: manga.en_name),
-			_textInfoCard(title: "Japanese Name", key: "jp_name", value: manga.jp_name),
-			_textInfoCard(title: "Chinese Manga Link", key: "ch_link", value: manga.ch_link),
-			_textInfoCard(title: "English Manga Link", key: "en_link", value: manga.en_link),
-			_textInfoCard(title: "Japanese Manga Link", key: "jp_link", value: manga.jp_link),
-			_textInfoCard(title: "Image Link", key: "img_link", value: manga.img_link),
-			_numberInfoCard(title: "Chapter Count", key: "chapter_count", value: manga.chapter_count),
+			_textInfoCard(title: "Chinese Name", key: "ch_name", value: _manga.ch_name),
+			_textInfoCard(title: "English Name", key: "en_name", value: _manga.en_name),
+			_textInfoCard(title: "Japanese Name", key: "jp_name", value: _manga.jp_name),
+			_textInfoCard(title: "Chinese Manga Link", key: "ch_link", value: _manga.ch_link),
+			_textInfoCard(title: "English Manga Link", key: "en_link", value: _manga.en_link),
+			_textInfoCard(title: "Japanese Manga Link", key: "jp_link", value: _manga.jp_link),
+			_textInfoCard(title: "Image Link", key: "img_link", value: _manga.img_link),
+			_numberInfoCard(title: "Chapter Count", key: "chapter_count", value: _manga.chapter_count),
 			_mangaLengthCard(),
 			_ratingCard(editable: true),
 		];
@@ -211,7 +215,7 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 	}
 	Widget _textInfoCard({required String title, String key = "", required String value}) {
 		return ListTile(
-			onTap: key.isNotEmpty ? () => button_editString(title, key, value) : null,
+			onTap: key.isNotEmpty ? () => _editString(title, key, value) : null,
 			contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
 			title: Text(title),
 			subtitle: value.isEmpty ? const Text("Not Provided") : Text(value),
@@ -219,7 +223,7 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 	}
 	Widget _numberInfoCard({required String title, String key = "", required int value}) {
 		return ListTile(
-			onTap: key.isNotEmpty ? () => button_editNumber(title, key, value) : null,
+			onTap: key.isNotEmpty ? () => _editNumber(title, key, value) : null,
 			contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
 			title: Text(title),
 			subtitle: Text(value.toString()),
@@ -230,15 +234,15 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 			onTap: editable ? () => selectPageInput(
 				context, 
 				title: "Manga Length", 
-				selected: manga.length.toString(), 
+				selected: _manga.length.toString(), 
 				inputList: MangaLength.values.map((value) => value.toString()).toList(),
 				onSelectIndex: (int index) {
-					updateValue("length", MangaLength.values[index]);
+					_updateValue("length", MangaLength.values[index]);
 				}
 			) : null,
 			contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
 			title: const Text("Manga Length"),
-			subtitle: Text(manga.length.toString()),
+			subtitle: Text(_manga.length.toString()),
 		);
 	}
 	Widget _ratingCard({ bool editable = false }) {
@@ -247,38 +251,38 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 			children: [
 				ListTile(
 					contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-					title: Text("Rating : ${manga.rating == -1 ? "Off" : "${ratingBuffer.toStringAsFixed(1)}/5.0"}"),
+					title: Text("Rating : ${_manga.rating == -1 ? "Off" : "${_ratingBuffer.toStringAsFixed(1)}/5.0"}"),
 					trailing: Wrap(
 						spacing: 16,
 						children: [
-							if (manga.rating != -1 && !editable) StarRating(value: manga.rating),
+							if (_manga.rating != -1 && !editable) StarRating(value: _manga.rating),
 							editable ? Switch(
-								value: (manga.rating != -1), 
+								value: (_manga.rating != -1), 
 								onChanged: (bool toggled) {
-									if (manga.rating == -1) {
-										updateValue("rating", (ratingBuffer*10).round()/10);
+									if (_manga.rating == -1) {
+										_updateValue("rating", (_ratingBuffer*10).round()/10);
 									} else {
-										updateValue("rating", -1.0);
+										_updateValue("rating", -1.0);
 									}
 								}
 							) : const SizedBox(width: 24)
 						],
 					),
 				),
-				if (editable && manga.rating != -1) ...[
-					StarRating(value: ratingBuffer),
+				if (editable && _manga.rating != -1) ...[
+					StarRating(value: _ratingBuffer),
 					Slider(
 						min: 0,
 						max: 5,
-						value: ratingBuffer, 
+						value: _ratingBuffer, 
 						onChanged: (newValue) {
 							setState(() {
-								ratingBuffer = newValue;
+								_ratingBuffer = newValue;
 							});
 						},
 						onChangeEnd: (newValue) {
 							setState(() {
-								updateValue("rating", (newValue*10).round()/10);
+								_updateValue("rating", (newValue*10).round()/10);
 							});
 						},
 					)
@@ -290,14 +294,14 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 	Widget _viewDisplay() {
 		final List<Widget> arr = [];
 
-		if (manga.ch_link.isNotEmpty) arr.add(_linkDisplay(title: "Manga (Chinese)", link: manga.ch_link));
-		if (manga.en_link.isNotEmpty) arr.add(_linkDisplay(title: "Manga (English)", link: manga.en_link));
-		if (manga.jp_link.isNotEmpty) arr.add(_linkDisplay(title: "Manga (Japanese)", link: manga.jp_link));
-		if (manga.ch_name.isNotEmpty) arr.add(_textInfoCard(title: "Chinese Name", value: manga.ch_name));
-		if (manga.en_name.isNotEmpty) arr.add(_textInfoCard(title: "English Name", value: manga.en_name));
-		if (manga.jp_name.isNotEmpty) arr.add(_textInfoCard(title: "Japanese Name", value: manga.jp_name));
+		if (_manga.ch_link.isNotEmpty) arr.add(_linkDisplay(title: "Manga (Chinese)", link: _manga.ch_link));
+		if (_manga.en_link.isNotEmpty) arr.add(_linkDisplay(title: "Manga (English)", link: _manga.en_link));
+		if (_manga.jp_link.isNotEmpty) arr.add(_linkDisplay(title: "Manga (Japanese)", link: _manga.jp_link));
+		if (_manga.ch_name.isNotEmpty) arr.add(_textInfoCard(title: "Chinese Name", value: _manga.ch_name));
+		if (_manga.en_name.isNotEmpty) arr.add(_textInfoCard(title: "English Name", value: _manga.en_name));
+		if (_manga.jp_name.isNotEmpty) arr.add(_textInfoCard(title: "Japanese Name", value: _manga.jp_name));
 		arr.addAll([
-			_numberInfoCard(title: "Chapter Count", value: manga.chapter_count),
+			_numberInfoCard(title: "Chapter Count", value: _manga.chapter_count),
 			_mangaLengthCard(),
 			_ratingCard(),
 		]);
@@ -318,7 +322,7 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 			title: Text(title),
 			trailing: Card(
 				child: TextButton(
-					onPressed: () => button_openLink(link),
+					onPressed: () => _openLink(link),
 					child: const Text("Open Link")
 				),
 			),
@@ -328,7 +332,7 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 	Widget _deleteMangaCard() {
 		return AppCardSplash(
 			child: InkWell(
-				onTap: button_onDeleteManga,
+				onTap: _onDeleteManga,
 				child: Padding(
 					padding: const EdgeInsets.all(8),
 					child: Row(

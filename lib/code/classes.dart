@@ -1,4 +1,26 @@
 import 'dart:convert';
+
+enum SortingType {
+	name,
+	dateAdded,
+	dateLastRead;
+}
+enum SortingOrder {
+	asc(value: 1), 
+	desc(value: -1);
+
+	const SortingOrder({required this.value});
+
+	final int value;
+
+	SortingOrder inverse() {
+		switch (this) {
+			case SortingOrder.asc: return SortingOrder.desc;
+			case SortingOrder.desc: return SortingOrder.asc;
+		}
+	}
+}
+
 enum MangaLength {
 	short(0),
 	medium(1),
@@ -21,6 +43,7 @@ enum MangaLength {
 		}
 	}
 }
+
 class Manga {
 	final int id;
 
@@ -34,6 +57,9 @@ class Manga {
 	final bool ended;
 	final List<int> tag_list;
 
+	final DateTime time_added;
+	final DateTime time_last_read;
+
 	Manga({
 		this.ch_name = "",
 		this.ch_link = "",
@@ -42,13 +68,17 @@ class Manga {
 		this.jp_name = "",
 		this.jp_link = "",
 		this.img_link = "",
-		required this.id,
+		this.id = -1,
 		required this.chapter_count,
 		required this.length,
 		required this.ended,
 		this.rating = -1,
 		this.tag_list = const [],
-	});
+		DateTime? time_added,
+		DateTime? time_last_read,
+	}) :
+		time_added = time_added ?? DateTime.now(),
+		time_last_read = DateTime.fromMillisecondsSinceEpoch(0);
 
 	factory Manga.placeHolder() {
 		return Manga(id: -1, chapter_count: -1, length: MangaLength.short, ended: false);
@@ -71,7 +101,8 @@ class Manga {
 			length: (map["length"] is int) ? MangaLength.fromValue(map["length"] as int) : map["length"],
 			ended: map["ended"] == 1,
 			rating: map["rating"] ?? -1,
-			tag_list: (tagList == null) ? [] : jsonDecode(tagList).cast<int>()
+			tag_list: (tagList == null) ? [] : jsonDecode(tagList).cast<int>(),
+			time_added: DateTime.fromMillisecondsSinceEpoch((map["time_added"] as int) * 60000)
 		);
 	}
 	Map<String, dynamic> toMap() {
@@ -79,10 +110,13 @@ class Manga {
 			"id": id,
 			"chapter_count": chapter_count,
 			"length": length.index,
+			"rating": rating,
 			"ended": ended?1:0,
+			"time_added": time_added.millisecondsSinceEpoch ~/ 60000,
+			"time_last_read": time_added.millisecondsSinceEpoch ~/ 60000,
 		};
+
 		final tagArrStr = jsonEncode(tag_list);
-		map["rating"] = rating;
 		if (tag_list.isNotEmpty) map["tag_list"] = ",${tagArrStr.substring(1, tagArrStr.length-1)},";
 		if (img_link.isNotEmpty) map["img_link"] = img_link;
 		if (ch_name.isNotEmpty) map["ch_name"] = ch_name;
@@ -97,6 +131,19 @@ class Manga {
 
 	String topName() {
 		return ch_name.isNotEmpty ? ch_name : (en_name.isNotEmpty ? en_name : (jp_name.isNotEmpty ? jp_name : "null"));
+	}
+
+	static int Function(Manga, Manga) sortFunc(SortingType sortType, SortingOrder order) {
+		switch (sortType) {
+			case SortingType.name:
+				return (Manga a, Manga b) => (order.value)*a.topName().compareTo(b.topName());
+			case SortingType.dateAdded:
+				return (Manga a, Manga b) => (order.value)*a.time_added.compareTo(b.time_added);
+			case SortingType.dateLastRead:
+				return (Manga a, Manga b) => (order.value)*a.time_last_read.compareTo(b.time_last_read);
+			default:
+				return (a, b) => 0;
+		}
 	}
 
 	@override

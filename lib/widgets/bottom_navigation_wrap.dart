@@ -19,7 +19,7 @@ class BottomNavigationWrap extends StatefulWidget {
 class _BottomNavigationWrapState extends State<BottomNavigationWrap> {
 	int currentIndex = 0;
 
-	void button_navigateTo(int index) {
+	void _navigateTo(int index) {
 		setState(() {
 			currentIndex = index;
 		});
@@ -63,7 +63,7 @@ class _BottomNavigationWrapState extends State<BottomNavigationWrap> {
 						color: (currentIndex == index) ? const Color.fromARGB(11, 135, 135, 135) : null,
 					),
 					child: IconButton(
-						onPressed: () => button_navigateTo(index),
+						onPressed: () => _navigateTo(index),
 						color: (currentIndex == index) ? Theme.of(context).colorScheme.primary : Colors.black,
 						icon: Wrap(
 							direction: Axis.vertical,

@@ -7,7 +7,8 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
-        android:fullBackupOnly="false">
+        android:fullBackupOnly="false"
+				>
         <activity
             android:name=".MainActivity"
             android:exported="true"

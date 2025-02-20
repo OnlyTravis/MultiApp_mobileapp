@@ -16,21 +16,21 @@ class AddMangaPage extends StatefulWidget {
 	State<AddMangaPage> createState() => _AddMangaPageState();
 }
 class _AddMangaPageState extends State<AddMangaPage> {
-	List<TextEditingController> inputNameControllers = [TextEditingController(), TextEditingController(), TextEditingController()];
-	List<TextEditingController> inputLinkControllers = [TextEditingController(), TextEditingController(), TextEditingController()];
-	TextEditingController imageLinkController = TextEditingController();
-	TextEditingController chapterCountController = TextEditingController();
+	final List<TextEditingController> _inputNameControllers = [TextEditingController(), TextEditingController(), TextEditingController()];
+	final List<TextEditingController> _inputLinkControllers = [TextEditingController(), TextEditingController(), TextEditingController()];
+	final TextEditingController _imageLinkController = TextEditingController();
+	final TextEditingController _chapterCountController = TextEditingController();
+	final List<MangaTag> _tagList = [];
+	
+	bool _toggleRating = false;
+	double _rating = 0;
+	bool _ended = false;
+	MangaLength _mangaLength = MangaLength.short;
 
-	bool toggleRating = false;
-	double rating = 0;
-	bool ended = false;
-	MangaLength mangaLength = MangaLength.short;
-	List<MangaTag> tagList = [];
-
-	bool checkValues() {
+	bool _checkValues() {
 		// Atlease 1 name
 		bool failed = true;
-		for (final controller in inputNameControllers) {
+		for (final controller in _inputNameControllers) {
 			if (controller.text.isNotEmpty) {
 				failed = false;
 				break;
@@ -42,39 +42,39 @@ class _AddMangaPageState extends State<AddMangaPage> {
 		}
 
 		// Number of Chapters
-		if (chapterCountController.text.isEmpty) {
+		if (_chapterCountController.text.isEmpty) {
 			alertSnackbar(context, text: "Please Enter Number of Chapters");
 			return false;
 		}
 
 		return true;
 	}
-	Future<void> button_onCreateManga() async {
+	Future<void> _onCreateManga() async {
 		// 1. Check Values & Confirm creation
-		if (!checkValues()) return;
+		if (!_checkValues()) return;
 		if (!await confirm(context, title: "Confirm Creating", text: "Are you sure you want to create this manga entry?")) return;
 
 		// 2. Add Manga record in Database
 		final db = DatabaseHandler();
 		final Manga manga = Manga(
-			ch_name: inputNameControllers[0].text,
-			en_name: inputNameControllers[1].text,
-			jp_name: inputNameControllers[2].text,
-			ch_link: inputLinkControllers[0].text,
-			en_link: inputLinkControllers[1].text,
-			jp_link: inputLinkControllers[2].text,
-			img_link: imageLinkController.text,
+			ch_name: _inputNameControllers[0].text,
+			en_name: _inputNameControllers[1].text,
+			jp_name: _inputNameControllers[2].text,
+			ch_link: _inputLinkControllers[0].text,
+			en_link: _inputLinkControllers[1].text,
+			jp_link: _inputLinkControllers[2].text,
+			img_link: _imageLinkController.text,
 			id: -1, 
-			chapter_count: int.parse(chapterCountController.text),
-			rating: toggleRating ? (rating*10).round()/10 : -1,
-			length: mangaLength,
-			ended: ended,
-			tag_list: tagList.map((MangaTag tag) => tag.id).toList(),
+			chapter_count: int.parse(_chapterCountController.text),
+			rating: _toggleRating ? (_rating*10).round()/10 : -1,
+			length: _mangaLength,
+			ended: _ended,
+			tag_list: _tagList.map((MangaTag tag) => tag.id).toList(),
 		);
 		await db.createManga(manga);
 
 		// 3. Update Tag's count in database
-		for (final tag in tagList) {
+		for (final tag in _tagList) {
 			await db.updateMangaTag(tag);
 		}
 
@@ -83,19 +83,19 @@ class _AddMangaPageState extends State<AddMangaPage> {
 			alertSnackbar(context, text: "Manga Added !");
 			Navigator.pop(context);
 			db.notifyUpdate(DatabaseTables.mangas);
-			if (tagList.isNotEmpty) db.notifyUpdate(DatabaseTables.mangaTags);
+			if (_tagList.isNotEmpty) db.notifyUpdate(DatabaseTables.mangaTags);
 		}
 	}
-	void button_onAddTags(List<MangaTag> addTagList) {
+	void _onAddTags(List<MangaTag> addTagList) {
 		setState(() {
-			tagList.addAll(addTagList);
+			_tagList.addAll(addTagList);
 		});
 	}
-	void button_onRemoveTag(MangaTag removeTag) {
-		int index = tagList.indexWhere((MangaTag tag) => tag.id == removeTag.id);
-		tagList[index].count--;
+	void _onRemoveTag(MangaTag removeTag) {
+		int index = _tagList.indexWhere((MangaTag tag) => tag.id == removeTag.id);
+		_tagList[index].count--;
 		setState(() {
-			tagList.removeAt(index);
+			_tagList.removeAt(index);
 		});
 	}
 
@@ -109,18 +109,18 @@ class _AddMangaPageState extends State<AddMangaPage> {
 					padding: const EdgeInsets.all(8),
 					children: [
 						_cardTitle(title: "1. Manga Names : (atleast 1)"),
-						_textInputCard(labelList: const ["Chinese Name", "English Name", "Japanese Name"], controllerList: inputNameControllers),
+						_textInputCard(labelList: const ["Chinese Name", "English Name", "Japanese Name"], controllerList: _inputNameControllers),
 						_cardTitle(title: "2. Manga Links : (optional)"),
-						_textInputCard(labelList: const ["Chinese Link", "English Link", "Japanese Link"], controllerList: inputLinkControllers),
+						_textInputCard(labelList: const ["Chinese Link", "English Link", "Japanese Link"], controllerList: _inputLinkControllers),
 						_cardTitle(title: "3. Manga Image Link : (optional)"),
-						_textInputCard(labelList: const ["Image Link"], controllerList: [imageLinkController]),
+						_textInputCard(labelList: const ["Image Link"], controllerList: [_imageLinkController]),
 						_cardTitle(title: "4. Manga States : "),
 						_mangaStateInputCard(),            
 						_cardTitle(title: "5. Manga Tags : (optional)"),
 						MangaTagListCard(
-							tagList: tagList,
-							onAddTags: button_onAddTags,
-							onRemoveTag: button_onRemoveTag,
+							tagList: _tagList,
+							onAddTags: _onAddTags,
+							onRemoveTag: _onRemoveTag,
 						),
 						_confirmCard(),
 					],
@@ -180,30 +180,30 @@ class _AddMangaPageState extends State<AddMangaPage> {
 			children: [
 				ListTile(
 					contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-					title: Text(toggleRating?"Rating : ${(rating*10).round()/10} / 5.0":"Rating : Off"),
+					title: Text(_toggleRating?"Rating : ${(_rating*10).round()/10} / 5.0":"Rating : Off"),
 					trailing: Switch(
-						value: toggleRating, 
+						value: _toggleRating, 
 						onChanged: (bool newValue) {
 							setState(() {
-								toggleRating = newValue;
+								_toggleRating = newValue;
 							});
 						}
 					),
 					onTap: () {
 						setState(() {
-							toggleRating = !toggleRating;
+							_toggleRating = !_toggleRating;
 						});
 					},
 				),
-				if (toggleRating) ...[
-					StarRating(value: (rating*10).round()/10),
+				if (_toggleRating) ...[
+					StarRating(value: (_rating*10).round()/10),
 					Slider(
 						min: 0,
 						max: 5,
-						value: rating, 
+						value: _rating, 
 						onChanged: (newValue) {
 							setState(() {
-								rating = newValue;
+								_rating = newValue;
 							});
 						}
 					)
@@ -225,7 +225,7 @@ class _AddMangaPageState extends State<AddMangaPage> {
 					decoration: const InputDecoration(
 						border: OutlineInputBorder(),
 					),
-					controller: chapterCountController,
+					controller: _chapterCountController,
 				),
 			),
 		);
@@ -235,16 +235,16 @@ class _AddMangaPageState extends State<AddMangaPage> {
 			contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
 			title: const Text("Ended : "),
 			trailing: Switch(
-				value: ended, 
+				value: _ended, 
 				onChanged: (bool newValue) {
 					setState(() {
-						ended = newValue;
+						_ended = newValue;
 					});
 				}
 			),
 			onTap: () {
 				setState(() {
-					ended = !ended;
+					_ended = !_ended;
 				});
 			},
 		);
@@ -254,24 +254,24 @@ class _AddMangaPageState extends State<AddMangaPage> {
 			onTap: () => selectPageInput(
 				context, 
 				title: "Manga Length",
-				selected: mangaLength.toString(),
+				selected: _mangaLength.toString(),
 				inputList: MangaLength.values.map((value) => value.toString()).toList(),
 				onSelectIndex: (int index) {
 					setState(() {
-						mangaLength = MangaLength.values[index];
+						_mangaLength = MangaLength.values[index];
 					});
 				},
 			),
 			contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
 			title: const Text("Manga Length : "),
-			subtitle: Text(mangaLength.toString()),
+			subtitle: Text(_mangaLength.toString()),
 		);
 	}
 	Widget _confirmCard() {
 		return AppCard(
 			margin: const EdgeInsets.only(top: 8),
 			child: TextButton(
-				onPressed: button_onCreateManga, 
+				onPressed: _onCreateManga, 
 				child: const Text("Create Manga Entry")
 			),
 		);

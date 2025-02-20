@@ -14,17 +14,19 @@ class MangaListPage extends StatefulWidget {
 	State<MangaListPage> createState() => _MangaPageListState();
 }
 class _MangaPageListState extends State<MangaListPage> {
-	late StreamSubscription streamSubscription;
-	List<Manga> mangaList = [];
+	late StreamSubscription _streamSubscription;
+	List<Manga> _mangaList = [];
+	SortingType _sortType = SortingType.name;
+	SortingOrder _sortOrder = SortingOrder.asc;
 
-	void button_onAddManga() {
+	void _onAddManga() {
 		Navigator.of(context).push(
 			MaterialPageRoute(
 				builder: (context) => const AddMangaPage()
 			)
 		);
 	}
-	void button_onViewManga(Manga manga) {
+	void _onViewManga(Manga manga) {
 		Navigator.of(context).push(
 			MaterialPageRoute(
 				builder: (context) => ViewMangaPage(
@@ -38,25 +40,31 @@ class _MangaPageListState extends State<MangaListPage> {
 		final db = DatabaseHandler();
 		final List<Manga> tmpList = await db.getAllManga();
 		setState(() {
-			mangaList = tmpList;
+			_mangaList = tmpList;
+			sortMangaList();
 		});
 	}
+	void sortMangaList() {
+		_mangaList.sort(Manga.sortFunc(_sortType, _sortOrder));
+	}
 
-	@override void initState() {
+	@override 
+	void initState() {
 		updateMangaList();
 
 		final db = DatabaseHandler();
 		if (db.streams[DatabaseTables.mangas] != null) {
-			streamSubscription = db.streams[DatabaseTables.mangas]!.listen((_) {
+			_streamSubscription = db.streams[DatabaseTables.mangas]!.listen((_) {
 				updateMangaList();
 			});
 		}
 
 		super.initState();
 	}
+	
 	@override 
 	void dispose() {
-		streamSubscription.cancel();
+		_streamSubscription.cancel();
 		super.dispose();
 	}
 
@@ -80,10 +88,10 @@ class _MangaPageListState extends State<MangaListPage> {
 							child: ListView(
 								padding: const EdgeInsets.all(12),
 								children: [
-									...mangaList.asMap().entries.map((entry) => MangaCard(
+									..._mangaList.asMap().entries.map((entry) => MangaCard(
 										index: entry.key,
 										manga: entry.value,
-										onTap: button_onViewManga,
+										onTap: _onViewManga,
 									))
 								],
 							),
@@ -120,7 +128,7 @@ class _MangaPageListState extends State<MangaListPage> {
 						),
 					),
 					IconButton(
-						onPressed: button_onAddManga, 
+						onPressed: _onAddManga, 
 						icon: const Icon(Icons.add),
 					),
 				],

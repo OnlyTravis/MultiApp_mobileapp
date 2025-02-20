@@ -14,10 +14,10 @@ class TagListPage extends StatefulWidget {
 	State<TagListPage> createState() => _TagListPageState();
 }
 class _TagListPageState extends State<TagListPage> {
-	late StreamSubscription streamSubscription;
-	List<MangaTag> tagList = [];
+	late StreamSubscription _streamSubscription;
+	List<MangaTag> _tagList = [];
 
-	Future<void> button_onAddTag() async {
+	Future<void> _onAddTag() async {
 		// 1. Ask for name input
 		final String tagName = (await alertInput<String>(context, 
 			title: "Create New Tag", 
@@ -29,9 +29,9 @@ class _TagListPageState extends State<TagListPage> {
 		final MangaTag tag = MangaTag(name: tagName, count: 0, id: -1);
 		final db = DatabaseHandler();
 		await db.createMangaTag(tag);
-		await updateTagList();
+		await _updateTagList();
 	}
-	Future<void> button_onRenameTag(MangaTag tag) async {
+	Future<void> _onRenameTag(MangaTag tag) async {
 		// 1. Ask for name input
 		String newTagName = (await alertInput<String>(context, 
 			title: "Rename Tag",
@@ -44,37 +44,37 @@ class _TagListPageState extends State<TagListPage> {
 		tag.name = newTagName;
 		final db = DatabaseHandler();
 		await db.updateMangaTag(tag);
-		await updateTagList();
+		await _updateTagList();
 	}
-	Future<void> button_onViewTag(MangaTag tag) async {
+	Future<void> _onViewTag(MangaTag tag) async {
 		Navigator.of(context).push(MaterialPageRoute(
 			builder: (_) => ViewTagPage(tag: tag)
 		));
 	}
 
-	Future<void> updateTagList() async {
+	Future<void> _updateTagList() async {
 		final db = DatabaseHandler();
 		final tmpList = await db.getAllMangaTag();
 		setState(() {
-			tagList = tmpList;
+			_tagList = tmpList;
 		});
 	}
 	void listenForUpdate() {
 		final db = DatabaseHandler();
-		streamSubscription = db.streams[DatabaseTables.mangaTags]!.listen((_) {
-			updateTagList();
+		_streamSubscription = db.streams[DatabaseTables.mangaTags]!.listen((_) {
+			_updateTagList();
 		});
 	}
 
 	@override
 	void initState() {
-		updateTagList();
+		_updateTagList();
 		listenForUpdate();
 		super.initState();
 	}
 	@override
   void dispose() {
-    streamSubscription.cancel();
+    _streamSubscription.cancel();
 		super.dispose();
   }
 
@@ -82,12 +82,12 @@ class _TagListPageState extends State<TagListPage> {
 	Widget build(BuildContext context) {
 		return Scaffold(
 			floatingActionButton: FloatingActionButton(
-				onPressed: button_onAddTag,
+				onPressed: _onAddTag,
 				child: const Icon(Icons.add),
 			),
 			body: ListView(
 				padding: const EdgeInsets.all(4),
-				children: tagList.map((MangaTag tag) => _tagCard(tag)).toList(),
+				children: _tagList.map((MangaTag tag) => _tagCard(tag)).toList(),
 			),
 		);
 	}
@@ -95,14 +95,14 @@ class _TagListPageState extends State<TagListPage> {
 		return AppCardSplash(
 			margin: const EdgeInsets.all(4),
 			child: InkWell(
-				onTap: () => button_onViewTag(tag),
+				onTap: () => _onViewTag(tag),
 				child: ListTile(
 					title: Text(tag.name),
 					subtitle: Text("Used in ${tag.count} manga${tag.count > 1 ? "s" : ""}"),
 					trailing: Wrap(
 						children: [
 							IconButton(
-								onPressed: () => button_onRenameTag(tag),
+								onPressed: () => _onRenameTag(tag),
 								icon: const Icon(Icons.drive_file_rename_outline)
 							),
 						],
