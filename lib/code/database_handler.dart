@@ -143,15 +143,19 @@ class DatabaseHandler {
 			where: "id = ${tag.id}"
 		);
 	}
-	Future<void> deleteMangaTag(int id) async {
+	Future<void> deleteMangaTag(MangaTag tag) async {
 		// 1. Remove tag from database
 		await db.delete(
 			DatabaseTables.mangaTags.toString(), 
-			where: "id = $id",
+			where: "id = ${tag.id}",
 		);
 
 		// 2. Update Mangas with that tag
-		//WIP
+		final List<Manga> mangaList = await getMangasFromTag(tag);
+		for (final manga in mangaList) {
+			manga.tag_list.remove(tag.id);
+			await updateManga(manga);
+		}
 	} 
 	Future<MangaTag?> getMangaTagFromId(int id) async {
 		try {

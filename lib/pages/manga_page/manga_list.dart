@@ -54,7 +54,14 @@ class _MangaPageListState extends State<MangaListPage> {
 
 		super.initState();
 	}
-	@override Widget build(BuildContext context) {
+	@override 
+	void dispose() {
+		streamSubscription.cancel();
+		super.dispose();
+	}
+
+	@override 
+	Widget build(BuildContext context) {
 		return Column(
 			mainAxisSize: MainAxisSize.min,
 			children: [
@@ -85,10 +92,6 @@ class _MangaPageListState extends State<MangaListPage> {
 				),
 			],
 		);
-	}
-	@override void dispose() {
-		streamSubscription.cancel();
-		super.dispose();
 	}
 
 	Widget _toolBar() {

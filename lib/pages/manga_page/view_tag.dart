@@ -48,7 +48,7 @@ class _ViewTagPage extends State<ViewTagPage> {
 
 		// 2. Remove tag from database
 		final db = DatabaseHandler();
-		await db.deleteMangaTag(tag.id);
+		await db.deleteMangaTag(tag);
 		db.notifyUpdate(DatabaseTables.mangaTags);
 
 		// 3. Navigate back to tag list page
