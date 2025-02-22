@@ -6,6 +6,7 @@ import 'package:multi_app/code/database_handler.dart';
 import 'package:multi_app/pages/manga_page/add_manga.dart';
 import 'package:multi_app/pages/manga_page/view_manga.dart';
 import 'package:multi_app/pages/manga_page/widgets/manga_card.dart';
+import 'package:multi_app/widgets/pop_up_menu.dart';
 
 class MangaListPage extends StatefulWidget {
 	const MangaListPage({super.key});
@@ -16,6 +17,11 @@ class MangaListPage extends StatefulWidget {
 class _MangaPageListState extends State<MangaListPage> {
 	late StreamSubscription _streamSubscription;
 	List<Manga> _mangaList = [];
+	final List<SortingType> _allowedSortingtypes = [
+		SortingType.name,
+		SortingType.dateAdded,
+		SortingType.dateLastRead,
+	];
 	SortingType _sortType = SortingType.name;
 	SortingOrder _sortOrder = SortingOrder.asc;
 
@@ -35,27 +41,30 @@ class _MangaPageListState extends State<MangaListPage> {
 			)
 		);
 	}
-
-	Future<void> updateMangaList() async {
-		final db = DatabaseHandler();
-		final List<Manga> tmpList = await db.getAllManga();
-		setState(() {
-			_mangaList = tmpList;
-			sortMangaList();
-		});
+	void _onChangeSortingOrder() {
+		_sortOrder = _sortOrder.inverse();
+		_sortMangaList();
 	}
-	void sortMangaList() {
-		_mangaList.sort(Manga.sortFunc(_sortType, _sortOrder));
+
+	Future<void> _updateMangaList() async {
+		final db = DatabaseHandler();
+		_mangaList = await db.getAllManga();
+		_sortMangaList();
+	}
+	void _sortMangaList() {
+		setState(() {
+			_mangaList.sort(Manga.sortFunc(_sortType, _sortOrder));
+		});
 	}
 
 	@override 
 	void initState() {
-		updateMangaList();
+		_updateMangaList();
 
 		final db = DatabaseHandler();
 		if (db.streams[DatabaseTables.mangas] != null) {
 			_streamSubscription = db.streams[DatabaseTables.mangas]!.listen((_) {
-				updateMangaList();
+				_updateMangaList();
 			});
 		}
 
@@ -113,23 +122,31 @@ class _MangaPageListState extends State<MangaListPage> {
 						onPressed: () {}, 
 						icon: const Wrap(
 							children: [
-								Text("Filter"),
 								Icon(Icons.filter_alt),
+								Text("Filter"),
 							],
 						),
 					),
-					IconButton(
-						onPressed: () {}, 
-						icon: const Wrap(
-							children: [
-								Text("Sorting"),
-								Icon(Icons.sort),
-							],
-						),
+					const VerticalDivider(width: 0, indent: 8, endIndent: 8),
+					PopUpSelectMenu(
+						selectedIndex: _allowedSortingtypes.indexOf(_sortType), 
+						menuItems: _allowedSortingtypes.map((sortType) => PopUpSelectMenuItem(label: sortType.toString())).toList(),
+						onChanged: (int index) {
+							setState(() {
+							  _sortType = _allowedSortingtypes[index];
+							});
+						}
 					),
+					const VerticalDivider(width: 0, indent: 8, endIndent: 8),
 					IconButton(
+						onPressed: _onChangeSortingOrder, 
+						icon: Icon((_sortOrder == SortingOrder.asc) ? Icons.arrow_upward : Icons.arrow_downward, size: 20),
+					),
+					const VerticalDivider(width: 0, indent: 8, endIndent: 8),
+					IconButton(
+						padding: EdgeInsets.zero,
 						onPressed: _onAddManga, 
-						icon: const Icon(Icons.add),
+						icon: const Icon(Icons.add, size: 20),
 					),
 				],
 			),

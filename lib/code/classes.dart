@@ -4,6 +4,15 @@ enum SortingType {
 	name,
 	dateAdded,
 	dateLastRead;
+
+	@override
+	String toString() {
+		switch (this) {
+			case SortingType.name: return "Name";
+			case SortingType.dateAdded: return "Date";
+			case SortingType.dateLastRead: return "LastRead";
+		}
+	}
 }
 enum SortingOrder {
 	asc(value: 1), 
