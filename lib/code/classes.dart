@@ -3,7 +3,9 @@ import 'dart:convert';
 enum SortingType {
 	name,
 	dateAdded,
-	dateLastRead;
+	dateLastRead,
+	chapterCount,
+	length;
 
 	@override
 	String toString() {
@@ -11,6 +13,8 @@ enum SortingType {
 			case SortingType.name: return "Name";
 			case SortingType.dateAdded: return "Date";
 			case SortingType.dateLastRead: return "LastRead";
+			case SortingType.chapterCount: return "Chapters";
+			case SortingType.length: return "Length";
 		}
 	}
 }
@@ -40,6 +44,10 @@ enum MangaLength {
 
 	factory MangaLength.fromValue(int value) {
 		return MangaLength.values.firstWhere((val) => val.index == value);
+	}
+
+	int toValue() {
+		return MangaLength.values.indexOf(this);
 	}
 
 	@override
@@ -150,6 +158,14 @@ class Manga {
 				return (Manga a, Manga b) => (order.value)*a.time_added.compareTo(b.time_added);
 			case SortingType.dateLastRead:
 				return (Manga a, Manga b) => (order.value)*a.time_last_read.compareTo(b.time_last_read);
+			case SortingType.chapterCount:
+				return (Manga a, Manga b) => a.chapter_count - b.chapter_count;
+			case SortingType.length:
+				return (Manga a, Manga b) {
+					int tmp = a.length.toValue() - b.length.toValue();
+					if (tmp == 0) return a.chapter_count - b.chapter_count;
+					return tmp;
+				};
 			default:
 				return (a, b) => 0;
 		}

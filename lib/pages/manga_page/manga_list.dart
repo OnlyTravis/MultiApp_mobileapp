@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:multi_app/code/alert.dart';
 import 'package:multi_app/code/classes.dart';
 import 'package:multi_app/code/database_handler.dart';
 import 'package:multi_app/pages/manga_page/add_manga.dart';
@@ -19,19 +20,14 @@ class _MangaPageListState extends State<MangaListPage> {
 	List<Manga> _mangaList = [];
 	final List<SortingType> _allowedSortingtypes = [
 		SortingType.name,
+		SortingType.chapterCount,
+		SortingType.length,
 		SortingType.dateAdded,
 		SortingType.dateLastRead,
 	];
 	SortingType _sortType = SortingType.name;
 	SortingOrder _sortOrder = SortingOrder.asc;
 
-	void _onAddManga() {
-		Navigator.of(context).push(
-			MaterialPageRoute(
-				builder: (context) => const AddMangaPage()
-			)
-		);
-	}
 	void _onViewManga(Manga manga) {
 		Navigator.of(context).push(
 			MaterialPageRoute(
@@ -41,8 +37,16 @@ class _MangaPageListState extends State<MangaListPage> {
 			)
 		);
 	}
-	void _onChangeSortingOrder() {
-		_sortOrder = _sortOrder.inverse();
+	void _onChangeSortingOrder(SortingOrder newSortOrder) {
+		setState(() {
+		  _sortOrder = newSortOrder;
+		});
+		_sortMangaList();
+	}
+	void _onChangeSortingType(SortingType newSortType) {
+		setState(() {
+		  _sortType = newSortType;
+		});
 		_sortMangaList();
 	}
 
@@ -82,7 +86,13 @@ class _MangaPageListState extends State<MangaListPage> {
 		return Column(
 			mainAxisSize: MainAxisSize.min,
 			children: [
-				_toolBar(),
+				_MangaListToolBar(
+					allowedSortingTypes: _allowedSortingtypes,
+					sortOrder: _sortOrder,
+					sortType: _sortType,
+					onChangeSortOrder: _onChangeSortingOrder,
+					onChangeSortType: _onChangeSortingType,
+				),
 				Flexible(
 					child: Container(
 						color: Theme.of(context).colorScheme.primaryContainer,
@@ -110,46 +120,109 @@ class _MangaPageListState extends State<MangaListPage> {
 			],
 		);
 	}
+}
 
-	Widget _toolBar() {
-		return Container(
+class _MangaListToolBar extends StatelessWidget {
+	final List<SortingType> allowedSortingTypes;
+	final SortingType sortType;
+	final SortingOrder sortOrder;
+	final Function(SortingType) onChangeSortType;
+	final Function(SortingOrder) onChangeSortOrder;
+
+	const _MangaListToolBar({
+		required this.allowedSortingTypes,
+		required this.sortType,
+		required this.sortOrder,
+		required this.onChangeSortType,
+		required this.onChangeSortOrder,
+	});
+
+	Future<void> _onTapFilter(BuildContext context) async {
+		bool confirmed = false;
+		await showDialog(
+			context: context,
+			builder: (BuildContext context) => AlertDialog(
+				title: const Text("Select Filter"),
+				content: Text("Filter WIP"),
+				actions: [
+					TextButton(
+						onPressed: () {
+							confirmed = true;
+							Navigator.pop(context);
+						},
+						child: const Text('Confirm'),
+					),
+					TextButton(
+						onPressed: () {
+							Navigator.pop(context);
+						},
+						child: const Text('Cancel'),
+					),
+				],
+			),
+		);
+
+		if (!confirmed) return;
+	}
+
+	@override
+  Widget build(BuildContext context) {
+		assert (allowedSortingTypes.contains(sortType));
+
+    return Container(
 			color: Theme.of(context).colorScheme.primaryContainer,
 			height: 40,
 			child: Row(
 				mainAxisAlignment: MainAxisAlignment.end,
 				children: [
 					IconButton(
-						onPressed: () {}, 
-						icon: const Wrap(
+						onPressed: () => _onTapFilter(context), 
+						icon: Row(
+							mainAxisSize: MainAxisSize.min,
 							children: [
-								Icon(Icons.filter_alt),
-								Text("Filter"),
+								Icon(
+									Icons.filter_alt,
+									color: Theme.of(context).colorScheme.primary,
+								),
+								Text(
+									"Filter",
+									style: TextStyle(
+										color: Theme.of(context).colorScheme.primary,
+									),
+								),
 							],
 						),
 					),
 					const VerticalDivider(width: 0, indent: 8, endIndent: 8),
 					PopUpSelectMenu(
-						selectedIndex: _allowedSortingtypes.indexOf(_sortType), 
-						menuItems: _allowedSortingtypes.map((sortType) => PopUpSelectMenuItem(label: sortType.toString())).toList(),
-						onChanged: (int index) {
-							setState(() {
-							  _sortType = _allowedSortingtypes[index];
-							});
-						}
+						onChanged: (int index) => onChangeSortType(allowedSortingTypes[index]),
+						leadingIcon: const Icon(Icons.sort),
+						selectedIndex: allowedSortingTypes.indexOf(sortType), 
+						menuItems: allowedSortingTypes.map((sortType) => sortType.toString()).toList(),
 					),
 					const VerticalDivider(width: 0, indent: 8, endIndent: 8),
 					IconButton(
-						onPressed: _onChangeSortingOrder, 
-						icon: Icon((_sortOrder == SortingOrder.asc) ? Icons.arrow_upward : Icons.arrow_downward, size: 20),
+						onPressed: () => onChangeSortOrder(sortOrder.inverse()),
+						icon: Icon(
+							(sortOrder == SortingOrder.asc) ? Icons.arrow_upward : Icons.arrow_downward, 
+							size: 20,
+							color: Theme.of(context).colorScheme.primary,
+						),
 					),
 					const VerticalDivider(width: 0, indent: 8, endIndent: 8),
 					IconButton(
 						padding: EdgeInsets.zero,
-						onPressed: _onAddManga, 
-						icon: const Icon(Icons.add, size: 20),
+						onPressed: () {
+							Navigator.of(context).push(
+								MaterialPageRoute(
+									builder: (context) => const AddMangaPage()
+								)
+							);
+						},
+						icon: Icon(Icons.add, size: 20, color: Theme.of(context).colorScheme.primary),
 					),
 				],
 			),
 		);
-	}
+  }
 }
