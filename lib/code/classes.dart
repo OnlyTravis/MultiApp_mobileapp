@@ -60,7 +60,6 @@ enum MangaLength {
 		}
 	}
 }
-
 class Manga {
 	final int id;
 
@@ -159,12 +158,12 @@ class Manga {
 			case SortingType.dateLastRead:
 				return (Manga a, Manga b) => (order.value)*a.time_last_read.compareTo(b.time_last_read);
 			case SortingType.chapterCount:
-				return (Manga a, Manga b) => a.chapter_count - b.chapter_count;
+				return (Manga a, Manga b) => (order.value)*(a.chapter_count - b.chapter_count);
 			case SortingType.length:
 				return (Manga a, Manga b) {
 					int tmp = a.length.toValue() - b.length.toValue();
-					if (tmp == 0) return a.chapter_count - b.chapter_count;
-					return tmp;
+					if (tmp == 0) return (order.value)*(a.chapter_count - b.chapter_count);
+					return (order.value)*(tmp);
 				};
 			default:
 				return (a, b) => 0;

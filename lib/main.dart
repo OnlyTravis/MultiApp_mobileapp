@@ -20,6 +20,9 @@ class MultiApp extends StatelessWidget {
 			theme: ThemeData(
 				colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
 				useMaterial3: true,
+				sliderTheme: const SliderThemeData(
+					showValueIndicator: ShowValueIndicator.always,
+				)
 			),
 			home: const NavigationWrap(),
 		);
