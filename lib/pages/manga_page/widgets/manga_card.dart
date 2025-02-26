@@ -44,10 +44,27 @@ class MangaCard extends StatelessWidget {
 											mainAxisSize: MainAxisSize.max,
 											mainAxisAlignment: MainAxisAlignment.spaceBetween,
 											children: [
-												Text("Chapters : ${manga.chapter_count}"),
-												(manga.rating != -1) ? 
-													StarRating(value: manga.rating) :
-													const Text("No Rating")
+												Flexible(
+													child: Center(
+														child: Text(manga.length.toString()),
+													),
+												),
+												Row(
+													spacing: 4,
+													mainAxisSize: MainAxisSize.min,
+													mainAxisAlignment: MainAxisAlignment.end,
+													children: [
+														MangaLengthBar(mangaLength: manga.length),
+														(manga.rating != -1) ? 
+															StarRating(value: manga.rating) :
+															const SizedBox(
+																width: 120,
+																child: Center(
+																	child: Text("No Rating"),
+																),
+															)
+													],
+												)
 											],
 										)
 									],
@@ -59,4 +76,56 @@ class MangaCard extends StatelessWidget {
 			),
 		);
 	}
+}
+class MangaLengthBar extends StatelessWidget {
+	final MangaLength mangaLength;
+
+	const MangaLengthBar({
+		super.key,
+		required this.mangaLength,
+	});
+
+	static const defaultBorderRadius = BorderRadius.all(Radius.circular(8));
+
+	@override
+  Widget build(BuildContext context) {
+		final value = mangaLength.toValue();
+		final Color bgColor = Theme.of(context).colorScheme.surface;
+		
+		return Container(
+			height: 16,
+			decoration: BoxDecoration(
+				border: Border.all(),
+				borderRadius: defaultBorderRadius,
+			),
+			child: ClipRRect(
+				borderRadius: defaultBorderRadius,
+				child: Row(
+					mainAxisSize: MainAxisSize.min,
+					mainAxisAlignment: MainAxisAlignment.start,
+					children: [
+						Container(
+							width: 16,
+							color: Colors.red,
+						),
+						const VerticalDivider(width: 1),
+						Container(
+							width: 16,
+							color: (value > 0) ? Colors.orange : bgColor,
+						),
+						const VerticalDivider(width: 1),
+						Container(
+							width: 16,
+							color: (value > 1) ? Colors.yellow : bgColor,
+						),
+						const VerticalDivider(width: 1),
+						Container(
+							width: 16,
+							color: (value > 2) ? Colors.lightGreen : bgColor,
+						),
+					],
+				),
+			),
+		);
+  }
 }

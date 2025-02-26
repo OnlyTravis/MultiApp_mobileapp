@@ -8,6 +8,35 @@ class StarRating extends StatelessWidget {
 
 	const StarRating({super.key, this.label, required this.value, this.size = 24, this.color = const Color.fromARGB(255, 255, 224, 130)});
 
+	Widget _getStarIcon(int num) {
+		if (value >= num) return Icon(Icons.star, size: size, color: color);
+		if (value+1 <= num) return Icon(Icons.star_border, size: size, color: color);
+
+		int flexValue = (value%1*100).floor();
+		return Stack(
+			children: [
+				Icon(Icons.star_border, size: size, color: color),
+				SizedBox(
+					width: size,
+					height: size,
+					child: ClipPath(
+						clipper: _StarClipper(),
+						child: Flex(
+							direction: Axis.horizontal,
+							children: [
+								Flexible(
+									flex: flexValue,
+									child: Container(color: color)
+								),
+								Flexible(flex: 100-flexValue, child: const SizedBox())
+							],
+						),
+					),
+				)
+			],
+		);
+	}
+
 	@override
 	Widget build(BuildContext context) {
 		if (value < 0 || value > 5) {
@@ -17,34 +46,7 @@ class StarRating extends StatelessWidget {
 			crossAxisAlignment: WrapCrossAlignment.center,
 			children: [
 				if (label != null) Text(label ?? ""),
-				...[1,2,3,4,5].map((int num) {
-					if (value >= num) return Icon(Icons.star, size: size, color: color);
-					if (value+1 <= num) return Icon(Icons.star_border, size: size, color: color);
-
-					int flexValue = (value%1*100).floor();
-					return Stack(
-						children: [
-							Icon(Icons.star_border, size: size, color: color),
-							SizedBox(
-								width: size,
-								height: size,
-								child: ClipPath(
-									clipper: _StarClipper(),
-									child: Flex(
-										direction: Axis.horizontal,
-										children: [
-											Flexible(
-												flex: flexValue,
-												child: Container(color: color)
-											),
-											Flexible(flex: 100-flexValue, child: const SizedBox())
-										],
-									),
-								),
-							)
-						],
-					);
-				}),
+				...[1,2,3,4,5].map(_getStarIcon),
 			]
 		);
 	}

@@ -29,16 +29,28 @@ class AppCard extends StatelessWidget {
 	}
 }
 class AppCardSplash extends StatelessWidget {
+	final double? width;
+	final double? height;
 	final EdgeInsetsGeometry? padding;
 	final EdgeInsetsGeometry? margin;
 	final Color? color;
 	final Widget? child;
-	const AppCardSplash({super.key, this.color, this.padding, this.margin, this.child});
+	const AppCardSplash({
+		super.key, 
+		this.width,
+		this.height,
+		this.color, 
+		this.padding, 
+		this.margin, 
+		this.child
+	});
 
 	@override
 	Widget build(BuildContext context) {
 		return Container(
 			clipBehavior: Clip.antiAlias,
+			width: width,
+			height: height,
 			padding: padding,
 			margin: margin,
 			decoration: BoxDecoration(

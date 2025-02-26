@@ -50,7 +50,13 @@ class _MangaPageListState extends State<MangaListPage> {
 		_sortMangaList();
 	}
 	void _onChangeFilter(_MangaFilter filter) {
-		// 1. Filter allMangaList
+		// 1. Check if all filters disabled
+		if (!filter.enabledFilters.contains(true)) {
+			_mangaList = _allMangaList;
+			_sortMangaList();
+		}
+
+		// 2. Filter allMangaList -> mangaList
 		_mangaList = [];
 		for (final Manga manga in _allMangaList) {
 			if (filter.enabledFilters[0]) {
@@ -71,7 +77,7 @@ class _MangaPageListState extends State<MangaListPage> {
 			_mangaList.add(manga);
 		}
 
-		// 2. Sort mangaList
+		// 3. Sort mangaList
 		_sortMangaList();
 	}
 
@@ -151,7 +157,7 @@ class _MangaPageListState extends State<MangaListPage> {
 	}
 }
 
-class _MangaListToolBar extends StatelessWidget {
+class _MangaListToolBar extends StatefulWidget {
 	final List<SortingType> allowedSortingTypes;
 	final SortingType sortType;
 	final SortingOrder sortOrder;
@@ -168,21 +174,42 @@ class _MangaListToolBar extends StatelessWidget {
 		required this.onApplyFilter,
 	});
 
+	@override
+  State<_MangaListToolBar> createState() => _MangaListToolBarState();
+}
+class _MangaListToolBarState extends State<_MangaListToolBar> {
+	bool _filterActive = false;
+
 	Future<void> _onTapFilter(BuildContext context) async {
+		if (_filterActive) {
+			setState(() {
+			  _filterActive = false;
+			});
+			widget.onApplyFilter(_MangaFilter.empty());
+			return;
+		}
+
 		await showDialog(
 			context: context,
 			builder: (BuildContext context) => _MangaFilterDialog(
 				onSubmit: (_MangaFilter filter) {
-					onApplyFilter(filter);
+					setState(() {
+					  _filterActive = filter.enabledFilters.contains(true);
+					});
+					widget.onApplyFilter(filter);
 				},
 			),
 		);
 	}
 
 	@override
-  Widget build(BuildContext context) {
-		assert (allowedSortingTypes.contains(sortType));
+	void initState() {
+		assert (widget.allowedSortingTypes.contains(widget.sortType));
+		super.initState();
+	}
 
+	@override
+  Widget build(BuildContext context) {
     return Container(
 			color: Theme.of(context).colorScheme.primaryContainer,
 			height: 40,
@@ -195,7 +222,7 @@ class _MangaListToolBar extends StatelessWidget {
 							mainAxisSize: MainAxisSize.min,
 							children: [
 								Icon(
-									Icons.filter_alt,
+									_filterActive ? Icons.filter_alt_off : Icons.filter_alt,
 									color: Theme.of(context).colorScheme.primary,
 								),
 								Text(
@@ -209,16 +236,16 @@ class _MangaListToolBar extends StatelessWidget {
 					),
 					const VerticalDivider(width: 0, indent: 8, endIndent: 8),
 					PopUpSelectMenu(
-						onChanged: (int index) => onChangeSortType(allowedSortingTypes[index]),
+						onChanged: (int index) => widget.onChangeSortType(widget.allowedSortingTypes[index]),
 						leadingIcon: const Icon(Icons.sort),
-						selectedIndex: allowedSortingTypes.indexOf(sortType), 
-						menuItems: allowedSortingTypes.map((sortType) => sortType.toString()).toList(),
+						selectedIndex: widget.allowedSortingTypes.indexOf(widget.sortType), 
+						menuItems: widget.allowedSortingTypes.map((sortType) => sortType.toString()).toList(),
 					),
 					const VerticalDivider(width: 0, indent: 8, endIndent: 8),
 					IconButton(
-						onPressed: () => onChangeSortOrder(sortOrder.inverse()),
+						onPressed: () => widget.onChangeSortOrder(widget.sortOrder.inverse()),
 						icon: Icon(
-							(sortOrder == SortingOrder.asc) ? Icons.arrow_upward : Icons.arrow_downward, 
+							(widget.sortOrder == SortingOrder.asc) ? Icons.arrow_upward : Icons.arrow_downward, 
 							size: 20,
 							color: Theme.of(context).colorScheme.primary,
 						),
@@ -254,6 +281,16 @@ class _MangaFilter {
 		required this.chapterIsLarger,
 		required this.chapterCount,
 	});
+
+	factory _MangaFilter.empty() {
+		return const _MangaFilter(
+			enabledFilters: [false, false, false], 
+			ratingRange: RangeValues(0, 5),
+			lengthRange: RangeValues(0, 3), 
+			chapterIsLarger: true, 
+			chapterCount: 0
+		);
+	}
 }
 class _MangaFilterDialog extends StatefulWidget {
 	final Function(_MangaFilter) onSubmit;
@@ -294,10 +331,11 @@ class _MangaFilterDialogState extends State<_MangaFilterDialog> {
 		return AlertDialog(
 			title: const Text("Select Filter"),
 			content: AppCardSplash(
+				width: double.infinity,
 				child: Column(
 					mainAxisSize: MainAxisSize.min,
 					children: [
-						_RangeFilter(
+						_RatingFilter(
 							onToggle: (bool value) => _onToggleFilter(0, value),
 							onChangeEnd: (newRange) {
 								_ratingRange = newRange;
@@ -336,19 +374,19 @@ class _MangaFilterDialogState extends State<_MangaFilterDialog> {
 		);
   }
 }
-class _RangeFilter extends StatefulWidget {
+class _RatingFilter extends StatefulWidget {
 	final Function(bool) onToggle;
 	final Function(RangeValues) onChangeEnd;
 	
-	const _RangeFilter({
+	const _RatingFilter({
 		required this.onToggle,
 		required this.onChangeEnd,
 	});
 
 	@override
-  State<_RangeFilter> createState() => _RangeFilterState();
+  State<_RatingFilter> createState() => _RatingFilterState();
 }
-class _RangeFilterState extends State<_RangeFilter> {
+class _RatingFilterState extends State<_RatingFilter> {
 	RangeValues ratingRange = const RangeValues(0, 5);
 
 	@override
@@ -360,28 +398,37 @@ class _RangeFilterState extends State<_RangeFilter> {
 			child: Column(
 				mainAxisSize: MainAxisSize.min,
 				children: [
-					Row(
-						mainAxisSize: MainAxisSize.min,
-						mainAxisAlignment: MainAxisAlignment.center,
-						children: [
-							StarRating(value: ratingRange.start),
-							const Text(" - "),
-							StarRating(value: ratingRange.end),
-						],
-					),
 					Padding(
 						padding: const EdgeInsets.symmetric(horizontal: 8),
 						child: Row(
-							mainAxisAlignment: MainAxisAlignment.spaceBetween,
+							mainAxisSize: MainAxisSize.min,
+							mainAxisAlignment: MainAxisAlignment.center,
 							children: [
-								Text(ratingRange.start.toStringAsFixed(2)),
-								Text(ratingRange.end.toStringAsFixed(2))
+								Column(
+									mainAxisSize: MainAxisSize.min,
+									children: [
+										StarRating(value: ratingRange.start),
+										Text(ratingRange.start.toStringAsFixed(1)),
+									],
+								),
+								const Text(" - "),
+								Column(
+									mainAxisSize: MainAxisSize.min,
+									children: [
+										StarRating(value: ratingRange.end),
+										Text(ratingRange.end.toStringAsFixed(1)),
+									],
+								),
 							],
 						),
 					),
 					RangeSlider(
 						min: 0,
 						max: 5,
+						labels: RangeLabels(
+							ratingRange.start.toStringAsFixed(1), 
+							ratingRange.end.toStringAsFixed(1),
+						),
 						values: ratingRange,
 						onChanged: (RangeValues newRange) {
 							setState(() {
@@ -389,7 +436,12 @@ class _RangeFilterState extends State<_RangeFilter> {
 							});
 						},
 						onChangeEnd: (_) {
-							widget.onChangeEnd(ratingRange);
+							widget.onChangeEnd(
+								RangeValues(
+									(ratingRange.start*10).floorToDouble()/10,
+									(ratingRange.end*10).floorToDouble()/10
+								)
+							);
 						},
 					),
 				],
@@ -412,6 +464,8 @@ class _LengthFilter extends StatefulWidget {
 class _LengthFilterState extends State<_LengthFilter> {
 	final int maxValue = MangaLength.values.length - 1;
 	RangeValues _lengthRange = RangeValues(0, (MangaLength.values.length - 1).toDouble());
+	MangaLength _startLength = MangaLength.short;
+	MangaLength _endLength = MangaLength.veryLong;
 
 	@override
   Widget build(BuildContext context) {
@@ -423,12 +477,25 @@ class _LengthFilterState extends State<_LengthFilter> {
 				mainAxisSize: MainAxisSize.min,
 				children: [
 					Row(
+						spacing: 16,
 						mainAxisSize: MainAxisSize.min,
 						mainAxisAlignment: MainAxisAlignment.center,
 						children: [
-							Text(MangaLength.fromValue(_lengthRange.start.round()).toString()),
-							const Text(" - "),
-							Text(MangaLength.fromValue(_lengthRange.end.round()).toString())
+							Column(
+								mainAxisSize: MainAxisSize.min,
+								children: [
+									MangaLengthBar(mangaLength: _startLength),
+									Text(_startLength.toString()),
+								],
+							),
+							const Text("-"),
+							Column(
+								mainAxisSize: MainAxisSize.min,
+								children: [
+									MangaLengthBar(mangaLength: _endLength),
+									Text(_endLength.toString()),
+								],
+							),
 						],
 					),
 					RangeSlider(
@@ -436,13 +503,15 @@ class _LengthFilterState extends State<_LengthFilter> {
 						max: maxValue.toDouble(),
 						divisions: maxValue,
 						labels: RangeLabels(
-							MangaLength.fromValue(_lengthRange.start.round()).toString(), 
-							MangaLength.fromValue(_lengthRange.end.round()).toString(),
+							_startLength.toString(), 
+							_endLength.toString(),
 						),
 						values: _lengthRange,
 						onChanged: (RangeValues newRange) {
 							setState(() {
 								_lengthRange = newRange;
+								_startLength = MangaLength.fromValue(_lengthRange.start.round());
+								_endLength = MangaLength.fromValue(_lengthRange.end.round());
 							});
 						},
 						onChangeEnd: (_) {
@@ -470,7 +539,7 @@ class _ChapterFilter extends StatefulWidget {
 }
 class _ChapterFilterState extends State<_ChapterFilter> {
 	bool _isLarger = true;
-	final TextEditingController _chapterCountController = TextEditingController();
+	final TextEditingController _chapterCountController = TextEditingController(text: "0");
 
 	@override
   Widget build(BuildContext context) {
@@ -480,7 +549,8 @@ class _ChapterFilterState extends State<_ChapterFilter> {
 			title: const Text("Chapter Filter"),
 			child: Row(
 				mainAxisSize: MainAxisSize.min,
-				spacing: 12,
+				crossAxisAlignment: CrossAxisAlignment.start,
+				spacing: 32,
 				children: [
 					IconButton(
 						onPressed: () {
@@ -489,17 +559,21 @@ class _ChapterFilterState extends State<_ChapterFilter> {
 							});
 							widget.onChange(_isLarger, int.tryParse(_chapterCountController.text) ?? 0);
 						},
+						style: ButtonStyle(
+							backgroundColor: WidgetStatePropertyAll(Theme.of(context).colorScheme.primaryContainer)
+						),
 						icon: _isLarger ? const Text(">=") : const Text("<="),
 					),
 					SizedBox(
-						width: 128,
+						width: 80,
+						height: 40,
 						child: TextField(
 							keyboardType: const TextInputType.numberWithOptions(decimal: false),
 							inputFormatters: [
 								FilteringTextInputFormatter.digitsOnly,
 							],
 							decoration: const InputDecoration(
-								border: OutlineInputBorder(),
+								border: UnderlineInputBorder(),
 							),
 							onChanged: (_) {
 								widget.onChange(_isLarger, int.tryParse(_chapterCountController.text) ?? 0);
