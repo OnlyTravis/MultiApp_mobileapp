@@ -8,6 +8,7 @@ class MangaTagListCard extends StatefulWidget {
 	final List<MangaTag> tagList;
 	final Widget? title;
 	final Widget? emptyText;
+	final bool display;
 	final Function(List<MangaTag>)? onAddTags;
 	final Function(MangaTag)? onRemoveTag;
 
@@ -15,6 +16,7 @@ class MangaTagListCard extends StatefulWidget {
 		super.key, 
 		required this.tagList,
 		this.title,
+		this.display = true,
 		this.emptyText,
 		this.onAddTags,
 		this.onRemoveTag
@@ -33,7 +35,8 @@ class _MangaTagListCardState extends State<MangaTagListCard> {
 			context: context,
 			builder: (BuildContext context) => AlertDialog(
 				title: const Text("Select tag(s) to Add"),
-				content: _exclusiveTagList.isEmpty ? const Text("No other tags available to add.") : _SelectableTagWrap(
+				content: _exclusiveTagList.isEmpty ? const Text("No other tags available to add.") : SelectableMangaTagWrap(
+					shouldChangeCount: true,
 					tagList: _exclusiveTagList,
 					selectedIndices: selectedTagIndices,
 				),
@@ -47,6 +50,9 @@ class _MangaTagListCardState extends State<MangaTagListCard> {
 					),
 					TextButton(
 						onPressed: () {
+							for (final int index in selectedTagIndices) {
+								_allTagList[index].count--;
+							}
 							Navigator.pop(context);
 						},
 						child: const Text('Cancel'),
@@ -83,52 +89,60 @@ class _MangaTagListCardState extends State<MangaTagListCard> {
 
 	@override
   Widget build(BuildContext context) {
-    return AppCard(
+    return widget.display ? AppCard(
 			padding: const EdgeInsets.all(8),
-			child: Column(
-				mainAxisSize: MainAxisSize.min,
-				crossAxisAlignment: CrossAxisAlignment.start,
-				children: [
-					if (widget.title != null) widget.title!,
-					(widget.tagList.isEmpty && widget.emptyText != null) ? widget.emptyText! : Wrap(
-						children: widget.tagList.map((MangaTag tag) => TagCard(
-							name:	tag.name,
-							count: tag.count,
-							onRemove: widget.onRemoveTag == null ? null : () => widget.onRemoveTag!(tag),
-						)).toList(),
-					),
-					if (widget.onAddTags != null) IconButton(
-						onPressed: () => _onAddTag(context),
-						style: IconButton.styleFrom(
-							backgroundColor: Theme.of(context).colorScheme.secondaryContainer
-						),
-						icon: const Row(
-							mainAxisSize: MainAxisSize.min,
-							children: [
-								Text("Add tag"),
-								Icon(Icons.add),
-							],
-						),
-					),
-				],
-			),
-		);
+			child: _mainBody(),
+		) : _mainBody();
   }
+	Widget _mainBody() {
+		return Column(
+			mainAxisSize: MainAxisSize.min,
+			crossAxisAlignment: CrossAxisAlignment.start,
+			children: [
+				if (widget.title != null) widget.title!,
+				(widget.tagList.isEmpty && widget.emptyText != null) ? widget.emptyText! : Wrap(
+					children: widget.tagList.map((MangaTag tag) => TagCard(
+						name:	tag.name,
+						count: tag.count,
+						onRemove: widget.onRemoveTag == null ? null : () => widget.onRemoveTag!(tag),
+					)).toList(),
+				),
+				if (widget.onAddTags != null) IconButton(
+					onPressed: () => _onAddTag(context),
+					style: IconButton.styleFrom(
+						backgroundColor: Theme.of(context).colorScheme.secondaryContainer
+					),
+					icon: const Row(
+						mainAxisSize: MainAxisSize.min,
+						children: [
+							Text("Add tag"),
+							Icon(Icons.add),
+						],
+					),
+				),
+			],
+		);
+	}
 }
 
-class _SelectableTagWrap extends StatefulWidget {
-	final List<MangaTag> tagList;
+class SelectableMangaTagWrap extends StatefulWidget {
+	final Function(bool, int)? onSelectIndex;
+	final bool shouldChangeCount;
 	final List<int> selectedIndices;
+	final List<MangaTag> tagList;
 
-	const _SelectableTagWrap({
-		required this.tagList,
+	const SelectableMangaTagWrap({
+		super.key,
+		this.onSelectIndex,
+		this.shouldChangeCount = false,
 		required this.selectedIndices,
+		required this.tagList,
 	});
 
 	@override
-  State<_SelectableTagWrap> createState() => _SelectableTagWrapState();
+  State<SelectableMangaTagWrap> createState() => SelectableMangaTagWrapState();
 }
-class _SelectableTagWrapState extends State<_SelectableTagWrap> {
+class SelectableMangaTagWrapState extends State<SelectableMangaTagWrap> {
 	List<MangaTag> tagList = [];
 	List<int> selectedIndices = [];
 
@@ -151,11 +165,13 @@ class _SelectableTagWrapState extends State<_SelectableTagWrap> {
 				onTap: () {
 					setState(() {
 						if (selectedIndices.contains(entry.key)) {
-							tagList[entry.key].count--;
+							if (widget.shouldChangeCount) tagList[entry.key].count--;
 							selectedIndices.remove(entry.key);
+							if (widget.onSelectIndex != null) widget.onSelectIndex!(false, entry.key);
 						} else {
-							tagList[entry.key].count++;
+							if (widget.shouldChangeCount) tagList[entry.key].count++;
 							selectedIndices.add(entry.key);
+							if (widget.onSelectIndex != null) widget.onSelectIndex!(true, entry.key);
 						}
 					});
 				},

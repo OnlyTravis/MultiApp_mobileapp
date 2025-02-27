@@ -7,6 +7,7 @@ import 'package:multi_app/code/database_handler.dart';
 import 'package:multi_app/pages/manga_page/add_manga.dart';
 import 'package:multi_app/pages/manga_page/view_manga.dart';
 import 'package:multi_app/pages/manga_page/widgets/manga_card.dart';
+import 'package:multi_app/pages/manga_page/widgets/manga_tag_card.dart';
 import 'package:multi_app/widgets/app_card.dart';
 import 'package:multi_app/widgets/expandable_listtile.dart';
 import 'package:multi_app/widgets/pop_up_menu.dart';
@@ -51,7 +52,7 @@ class _MangaPageListState extends State<MangaListPage> {
 	}
 	void _onChangeFilter(_MangaFilter filter) {
 		// 1. Check if all filters disabled
-		if (!filter.enabledFilters.contains(true)) {
+		if (filter.isEmpty()) {
 			_mangaList = _allMangaList;
 			_sortMangaList();
 		}
@@ -73,6 +74,22 @@ class _MangaPageListState extends State<MangaListPage> {
 					if (manga.chapter_count > filter.chapterCount) continue;
 				}
 			}
+
+			bool shouldSkip = false;
+			for (final int includeId in filter.includeTagIds) {
+				if (!manga.tag_list.contains(includeId)) {
+					shouldSkip = true;
+					break;
+				}
+			}
+			if (shouldSkip) continue;
+			for (final int excludeId in filter.excludeTagIds) {
+				if (manga.tag_list.contains(excludeId)) {
+					shouldSkip = true;
+					break;
+				}
+			}
+			if (shouldSkip) continue;
 
 			_mangaList.add(manga);
 		}
@@ -194,7 +211,7 @@ class _MangaListToolBarState extends State<_MangaListToolBar> {
 			builder: (BuildContext context) => _MangaFilterDialog(
 				onSubmit: (_MangaFilter filter) {
 					setState(() {
-					  _filterActive = filter.enabledFilters.contains(true);
+					  _filterActive = !filter.isEmpty();
 					});
 					widget.onApplyFilter(filter);
 				},
@@ -273,6 +290,8 @@ class _MangaFilter {
 	final RangeValues lengthRange;
 	final bool chapterIsLarger;
 	final int chapterCount;
+	final List<int> includeTagIds;
+	final List<int> excludeTagIds;
 
 	const _MangaFilter({
 		required this.enabledFilters,
@@ -280,6 +299,8 @@ class _MangaFilter {
 		required this.lengthRange,
 		required this.chapterIsLarger,
 		required this.chapterCount,
+		required this.includeTagIds,
+		required this.excludeTagIds
 	});
 
 	factory _MangaFilter.empty() {
@@ -288,8 +309,14 @@ class _MangaFilter {
 			ratingRange: RangeValues(0, 5),
 			lengthRange: RangeValues(0, 3), 
 			chapterIsLarger: true, 
-			chapterCount: 0
+			chapterCount: 0,
+			includeTagIds: [],
+			excludeTagIds: []
 		);
+	}
+
+	bool isEmpty() {
+		return !enabledFilters.contains(true) && includeTagIds.isEmpty && excludeTagIds.isEmpty;
 	}
 }
 class _MangaFilterDialog extends StatefulWidget {
@@ -304,6 +331,9 @@ class _MangaFilterDialog extends StatefulWidget {
 }
 class _MangaFilterDialogState extends State<_MangaFilterDialog> {
 	final List<bool> _toggledFilters = [false, false, false];
+	List<MangaTag> _allTagList = [];
+	final List<int> _includeTagIndices = [];
+	final List<int> _excludeTagIndices = [];
 
 	RangeValues _ratingRange = const RangeValues(0, 5);
 	RangeValues _lengthRange = RangeValues(0, (MangaLength.values.length-1).toDouble());
@@ -318,6 +348,8 @@ class _MangaFilterDialogState extends State<_MangaFilterDialog> {
 				lengthRange: _lengthRange,
 				chapterIsLarger: _chapterIsLarger,
 				chapterCount: _chapterCount,
+				includeTagIds: _includeTagIndices.map((int index) => _allTagList[index].id).toList(),
+				excludeTagIds: _excludeTagIndices.map((int index) => _allTagList[index].id).toList(),
 			)
 		);
 		Navigator.pop(context);
@@ -325,6 +357,20 @@ class _MangaFilterDialogState extends State<_MangaFilterDialog> {
 	void _onToggleFilter(int index, bool value) {
 		_toggledFilters[index] = value;
 	}
+
+	Future<void> _fetchTagList() async {
+		final db = DatabaseHandler();
+		final tmpTagList = await db.getAllMangaTag();
+		setState(() {
+			_allTagList = tmpTagList;
+		});
+	}
+
+	@override
+  void initState() {
+		_fetchTagList();
+		super.initState();
+  }
 
 	@override
   Widget build(BuildContext context) {
@@ -355,6 +401,18 @@ class _MangaFilterDialogState extends State<_MangaFilterDialog> {
 								_chapterIsLarger = isLarger;
 								_chapterCount = chapterCount;
 							}
+						),
+						const Divider(height: 0),
+						_TagFilter(
+							title: "Include tags : ",
+							tagList: _allTagList,
+							selectedTagIndices: _includeTagIndices,
+						),
+						const Divider(height: 0),
+						_TagFilter(
+							title: "Exclude tags : ",
+							tagList: _allTagList,
+							selectedTagIndices: _excludeTagIndices,
 						),
 					],
 				),
@@ -585,4 +643,33 @@ class _ChapterFilterState extends State<_ChapterFilter> {
 			),
 		);
 	}
+}
+class _TagFilter extends StatefulWidget {
+	final String title;
+	final List<MangaTag> tagList;
+	final List<int> selectedTagIndices;
+
+	const _TagFilter({
+		required this.title,
+		required this.tagList,
+		required this.selectedTagIndices,
+	});
+
+	@override
+  State<_TagFilter> createState() => _TagFilterState();
+}
+class _TagFilterState extends State<_TagFilter> {
+	@override
+  Widget build(BuildContext context) {
+		return ExpandableListTile(
+			crossAxisAlignment: CrossAxisAlignment.start,
+			bodyPadding: const EdgeInsets.all(6),
+			title: Text(widget.title),
+			trailingStyle: ExpandableListTileTrailing.expandIcon,
+			child: SelectableMangaTagWrap(
+				tagList: widget.tagList,
+				selectedIndices: widget.selectedTagIndices,
+			),
+		);
+  }
 }

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 
 enum ExpandableListTileTrailing {
-	toggledSwitch;
+	toggledSwitch,
+	expandIcon;
 }
 class ExpandableListTile extends StatefulWidget {
 	final Function(bool)? onToggle;
 	final Widget? title;
 	final Widget? subtitle;
+	final EdgeInsetsGeometry? bodyPadding;
 	final ExpandableListTileTrailing? trailingStyle;
+	final CrossAxisAlignment crossAxisAlignment;
 	final Widget? child;
 	
 	const ExpandableListTile({
@@ -15,6 +18,8 @@ class ExpandableListTile extends StatefulWidget {
 		this.onToggle,
 		this.title,
 		this.subtitle,
+		this.bodyPadding,
+		this.crossAxisAlignment = CrossAxisAlignment.center,
 		this.trailingStyle,
 		this.child,
 	});
@@ -36,6 +41,7 @@ class _ExpandableListTileState extends State<ExpandableListTile> {
   Widget build(BuildContext context) {
 		return Column(
 			mainAxisSize: MainAxisSize.min,
+			crossAxisAlignment: widget.crossAxisAlignment,
 			children: [
 				ListTile(
 					onTap: _onToggle,
@@ -43,7 +49,10 @@ class _ExpandableListTileState extends State<ExpandableListTile> {
 					subtitle: widget.subtitle,
 					trailing: _trailingWidget(),
 				),
-				if (expanded && widget.child != null) widget.child!,
+				if (expanded && widget.child != null) (widget.bodyPadding == null) ? widget.child! : Padding(
+					padding: widget.bodyPadding!,
+					child: widget.child,
+				),
 			],
 		);
   }
@@ -56,6 +65,8 @@ class _ExpandableListTileState extends State<ExpandableListTile> {
 					value: expanded, 
 					onChanged: (_) => _onToggle(),
 				);
+			case ExpandableListTileTrailing.expandIcon:
+				return (expanded) ? const Icon(Icons.arrow_drop_up) : const Icon(Icons.arrow_drop_down);
 		}
 	}
 }
