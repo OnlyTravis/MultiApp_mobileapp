@@ -67,12 +67,14 @@ class Manga {
 	final String ch_name, en_name, jp_name;
 	final String ch_link, en_link, jp_link;
 	final String img_link;
+	final String description;
 
 	final double rating;
 	final int chapter_count;
 	final MangaLength length;
 	final bool ended;
 	final List<int> tag_list;
+	final List<int> bookmark_list;
 
 	final DateTime time_added;
 	DateTime time_last_read;
@@ -85,12 +87,14 @@ class Manga {
 		this.jp_name = "",
 		this.jp_link = "",
 		this.img_link = "",
+		this.description = "",
 		this.id = -1,
 		required this.chapter_count,
 		required this.length,
 		required this.ended,
 		this.rating = -1,
 		this.tag_list = const [],
+		this.bookmark_list = const [],
 		DateTime? time_added,
 		DateTime? time_last_read,
 	}) :
@@ -102,23 +106,27 @@ class Manga {
 	}
 	factory Manga.fromMap(Map<String, dynamic> map) {
 		String? tagList = map["tag_list"] as String?;
-		if (tagList != null) {
-			tagList = "[${tagList.substring(1, tagList.length-1)}]";
-		}
+		String? bookmarkList = map["bookmark_list"] as String?;
+		
+		if (tagList != null) tagList = "[${tagList.substring(1, tagList.length-1)}]";
+		if (bookmarkList != null) bookmarkList = "[${bookmarkList.substring(1, bookmarkList.length-1)}]";
+		
 		return Manga(
-			ch_name: map["ch_name"] ?? "",
-			ch_link: map["ch_link"] ?? "",
-			en_name: map["en_name"] ?? "",
-			en_link: map["en_link"] ?? "",
-			jp_name: map["jp_name"] ?? "",
-			jp_link: map["jp_link"] ?? "",
-			img_link: map["img_link"] ?? "",
+			ch_name: map["ch_name"],
+			ch_link: map["ch_link"],
+			en_name: map["en_name"],
+			en_link: map["en_link"],
+			jp_name: map["jp_name"],
+			jp_link: map["jp_link"],
+			img_link: map["img_link"],
+			description: map["description"],
 			id: map["id"],
 			chapter_count: map["chapter_count"],
 			length: (map["length"] is int) ? MangaLength.fromValue(map["length"] as int) : map["length"],
 			ended: map["ended"] == 1,
 			rating: map["rating"] ?? -1,
 			tag_list: (tagList == null) ? [] : jsonDecode(tagList).cast<int>(),
+			bookmark_list: (bookmarkList == null) ? [] : jsonDecode(bookmarkList).cast<int>(),
 			time_added: DateTime.fromMillisecondsSinceEpoch((map["time_added"] as int) * 60000)
 		);
 	}
@@ -133,9 +141,12 @@ class Manga {
 			"time_last_read": time_added.millisecondsSinceEpoch ~/ 60000,
 		};
 
-		final tagArrStr = jsonEncode(tag_list);
-		if (tag_list.isNotEmpty) map["tag_list"] = ",${tagArrStr.substring(1, tagArrStr.length-1)},";
+		final tagListStr = jsonEncode(tag_list);
+		final bookmarkListStr = jsonEncode(bookmark_list);
+		if (tag_list.isNotEmpty) map["tag_list"] = ",${tagListStr.substring(1, tagListStr.length-1)},";
+		if (bookmark_list.isNotEmpty) map["bookmark_list"] = ",${bookmarkListStr.substring(1, bookmarkListStr.length-1)},";
 		if (img_link.isNotEmpty) map["img_link"] = img_link;
+		if (description.isNotEmpty) map["description"] = description;
 		if (ch_name.isNotEmpty) map["ch_name"] = ch_name;
 		if (ch_link.isNotEmpty) map["ch_link"] = ch_link;
 		if (en_name.isNotEmpty) map["en_name"] = en_name;
@@ -215,4 +226,37 @@ class MangaTag {
   String toString() {
     return "MangaTag(name : $name, count : $count, id : $id)";
   }
+}
+class MangaBookmarks {
+	final String name;
+	final int id;
+	final double chapter;
+	final String link;
+
+	const MangaBookmarks({
+		required this.name,
+		this.id = -1,
+		required this.chapter,
+		this.link = ""
+	});
+
+	factory MangaBookmarks.fromMap(Map<String, dynamic> map) {
+		return MangaBookmarks(
+			name: map["name"] as String,
+			id: map["id"] as int,
+			chapter: map["chapter"] as double,
+			link: map["link"] ?? ""
+		);
+	}
+	Map<String, dynamic> toMap() {
+		final Map<String, dynamic> map = {
+			"name": name,
+			"id": id,
+			"chapter": chapter,
+		};
+		if (link.isNotEmpty) map["link"] = link;
+
+		return map;
+	}
+	
 }

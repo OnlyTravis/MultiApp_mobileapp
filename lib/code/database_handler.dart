@@ -5,15 +5,19 @@ import 'package:rxdart/rxdart.dart';
 import 'package:sqflite/sqflite.dart';
 
 enum DatabaseTables {
-	mangas,
-	mangaTags;
+	mangas(tableName: "Mangas"),
+	mangaTags(tableName: "MangaTags"),
+	mangaBookmarks(tableName: "MangaBookmarks");
+
+	final String tableName;
+
+	const DatabaseTables({
+		required this.tableName,
+	});
 
 	@override
 	String toString() {
-		switch (this) {
-			case DatabaseTables.mangas: return "Mangas";
-			case DatabaseTables.mangaTags: return "MangaTags";
-		}
+		return tableName;
 	}
 }
 
@@ -53,8 +57,11 @@ class DatabaseHandler {
 				jp_link TEXT,
 				img_link TEXT,
 
+				description TEXT,
+
 				rating REAL,
 				tag_list TEXT,
+				bookmark_list TEXT,
 				chapter_count INTEGER,
 				length INTEGER,
 				ended INTEGER,
@@ -69,6 +76,15 @@ class DatabaseHandler {
 			CREATE TABLE IF NOT EXISTS ${DatabaseTables.mangaTags} (
 				name TEXT,
 				count INTEGER,
+
+				id INTEGER PRIMARY KEY AUTOINCREMENT
+			);
+		''');
+		await db.execute('''
+			CREATE TABLE IF NOT EXISTS ${DatabaseTables.mangaBookmarks} (
+				name TEXT,
+				chapter REAL,
+				link TEXT,
 
 				id INTEGER PRIMARY KEY AUTOINCREMENT
 			);
@@ -181,4 +197,6 @@ class DatabaseHandler {
 		}
 		return arr;
 	}
+
+	
 }
