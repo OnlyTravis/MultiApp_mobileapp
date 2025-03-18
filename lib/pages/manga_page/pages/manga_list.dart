@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:multi_app/code/classes.dart';
 import 'package:multi_app/code/database_handler.dart';
-import 'package:multi_app/pages/manga_page/add_manga.dart';
-import 'package:multi_app/pages/manga_page/view_manga.dart';
+import 'package:multi_app/pages/manga_page/pages/add_manga.dart';
+import 'package:multi_app/pages/manga_page/pages/view_manga.dart';
 import 'package:multi_app/pages/manga_page/widgets/manga_card.dart';
 import 'package:multi_app/pages/manga_page/widgets/manga_tag_card.dart';
 import 'package:multi_app/widgets/app_card.dart';
@@ -233,6 +233,7 @@ class _MangaListToolBarState extends State<_MangaListToolBar> {
 			child: Row(
 				mainAxisAlignment: MainAxisAlignment.end,
 				children: [
+					const SizedBox(width: 6),
 					IconButton(
 						onPressed: () => _onTapFilter(context), 
 						icon: Row(
@@ -251,6 +252,7 @@ class _MangaListToolBarState extends State<_MangaListToolBar> {
 							],
 						),
 					),
+					const Expanded(child: SizedBox()),
 					const VerticalDivider(width: 0, indent: 8, endIndent: 8),
 					PopUpSelectMenu(
 						onChanged: (int index) => widget.onChangeSortType(widget.allowedSortingTypes[index]),
@@ -378,43 +380,46 @@ class _MangaFilterDialogState extends State<_MangaFilterDialog> {
 			title: const Text("Select Filter"),
 			content: AppCardSplash(
 				width: double.infinity,
-				child: Column(
-					mainAxisSize: MainAxisSize.min,
-					children: [
-						_RatingFilter(
-							onToggle: (bool value) => _onToggleFilter(0, value),
-							onChangeEnd: (newRange) {
-								_ratingRange = newRange;
-							},
-						),
-						const Divider(height: 0),
-						_LengthFilter(
-							onToggle: (bool value) => _onToggleFilter(1, value),
-							onChangeEnd: (newRange) {
-								_lengthRange = newRange;
-							},
-						),
-						const Divider(height: 0),
-						_ChapterFilter(
-							onToggle: (bool value) => _onToggleFilter(2, value),
-							onChange: (bool isLarger, int chapterCount) {
-								_chapterIsLarger = isLarger;
-								_chapterCount = chapterCount;
-							}
-						),
-						const Divider(height: 0),
-						_TagFilter(
-							title: "Include tags : ",
-							tagList: _allTagList,
-							selectedTagIndices: _includeTagIndices,
-						),
-						const Divider(height: 0),
-						_TagFilter(
-							title: "Exclude tags : ",
-							tagList: _allTagList,
-							selectedTagIndices: _excludeTagIndices,
-						),
-					],
+				child: SizedBox(
+					width: double.maxFinite,
+					height: 256,
+					child: ListView(
+						children: [
+							_RatingFilter(
+								onToggle: (bool value) => _onToggleFilter(0, value),
+								onChangeEnd: (newRange) {
+									_ratingRange = newRange;
+								},
+							),
+							const Divider(height: 0),
+							_LengthFilter(
+								onToggle: (bool value) => _onToggleFilter(1, value),
+								onChangeEnd: (newRange) {
+									_lengthRange = newRange;
+								},
+							),
+							const Divider(height: 0),
+							_ChapterFilter(
+								onToggle: (bool value) => _onToggleFilter(2, value),
+								onChange: (bool isLarger, int chapterCount) {
+									_chapterIsLarger = isLarger;
+									_chapterCount = chapterCount;
+								}
+							),
+							const Divider(height: 0),
+							_TagFilter(
+								title: "Include tags : ",
+								tagList: _allTagList,
+								selectedTagIndices: _includeTagIndices,
+							),
+							const Divider(height: 0),
+							_TagFilter(
+								title: "Exclude tags : ",
+								tagList: _allTagList,
+								selectedTagIndices: _excludeTagIndices,
+							),
+						],
+					),
 				),
 			),
 			actions: [

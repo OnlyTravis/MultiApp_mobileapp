@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:multi_app/pages/pages.dart';
 
-class TabData {
+class _TabData {
 	final String title;
+	final IconData icon;
 	final Pages page;
 
-	const TabData({required this.title, required this.page});
+	const _TabData({required this.title, required this.icon, required this.page});
 }
 class NavigationWrap extends StatefulWidget {
 	const NavigationWrap({super.key});
@@ -14,38 +15,62 @@ class NavigationWrap extends StatefulWidget {
 	State<NavigationWrap> createState() => _NavigationWrapState();
 }
 class _NavigationWrapState extends State<NavigationWrap> with TickerProviderStateMixin {
-	final List<TabData> _tabList = [
-		const TabData(title: "Home", page: Pages.homePage),
-		const TabData(title: "Manga", page: Pages.mangaPage),
-		...List.generate(10, (int index) => TabData(title: "Item $index", page: Pages.none))
+	int _currentPageIndex = 0;
+	final List<_TabData> _tabList = [
+		const _TabData(title: "Home", icon: Icons.home, page: Pages.homePage),
+		const _TabData(title: "Manga", icon: Icons.book, page: Pages.mangaPage),
+		...List.generate(10, (int index) => _TabData(title: "Item $index", icon: Icons.abc_sharp, page: Pages.none))
 	];
+
+	void _navigateTo(int index) {
+		Navigator.of(context).pop();
+		setState(() {
+		  _currentPageIndex = index;
+		});
+	}
 
 	@override
 	Widget build(BuildContext context) {
-		return DefaultTabController(
-			initialIndex: 0,
-			length: _tabList.length, 
-			child: Scaffold(
-				appBar: AppBar(
-					backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-					title: const Text("Multi-App", textScaler: TextScaler.linear(1.5)),
-					bottom: _navigationBar()
+		return Scaffold(
+			appBar: AppBar(
+				backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+				title: Row(
+					children: [
+						const Text("Multi-App", textScaler: TextScaler.linear(1.5)),
+						Text("   ---   ${_tabList[_currentPageIndex].title}")
+					],
 				),
-				body: TabBarView(
-					children: _tabList.map((TabData tab) => toPage(tab.page)).toList(),
+			),
+			body: toPage(_tabList[_currentPageIndex].page),
+			endDrawer: Drawer(
+				backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+				child: ListView(
+					padding: const EdgeInsets.all(0),
+					children: [
+						Container(
+							color: Theme.of(context).colorScheme.primaryContainer,
+							padding: const EdgeInsets.only(left: 16),
+							height: 80,
+							child: const Row(
+								children: [
+									Text('Applications', textScaler: TextScaler.linear(1.5))
+								],
+							),
+						),
+						..._tabList.asMap().entries.map((entry) => _drawerTab(entry.value, entry.key)),
+					],
 				),
 			),
 		);
 	}
 
-	TabBar _navigationBar() {
-		return TabBar(
-			physics: const BouncingScrollPhysics(),
-			isScrollable: true,
-			tabAlignment: TabAlignment.center,
-			tabs: _tabList.map((TabData tab) => Tab(
-				text: tab.title,
-			)).toList()
+	ListTile _drawerTab(_TabData tabData, int index) {
+		return ListTile(
+			selected: (index == _currentPageIndex),
+			selectedTileColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+			onTap: () => _navigateTo(index),
+			leading: Icon(tabData.icon),
+			title: Text(tabData.title),
 		);
 	}
 }

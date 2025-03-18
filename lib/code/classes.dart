@@ -1,21 +1,22 @@
 import 'dart:convert';
 
 enum SortingType {
-	name,
-	dateAdded,
-	dateLastRead,
-	chapterCount,
-	length;
+	name(text: "Name"),
+	count(text: "Count"),
+	dateAdded(text: "Date"),
+	dateLastRead(text: "LastRead"),
+	chapterCount(text: "Chapters"),
+	length(text: "Length");
+
+	final String text;
+
+	const SortingType({
+		required this.text,
+	});
 
 	@override
 	String toString() {
-		switch (this) {
-			case SortingType.name: return "Name";
-			case SortingType.dateAdded: return "Date";
-			case SortingType.dateLastRead: return "LastRead";
-			case SortingType.chapterCount: return "Chapters";
-			case SortingType.length: return "Length";
-		}
+		return text;
 	}
 }
 enum SortingOrder {
@@ -74,7 +75,7 @@ class Manga {
 	final List<int> tag_list;
 
 	final DateTime time_added;
-	final DateTime time_last_read;
+	DateTime time_last_read;
 
 	Manga({
 		this.ch_name = "",
@@ -200,6 +201,14 @@ class MangaTag {
 			"id": id,
 		};
 		return map;
+	}
+
+	static int Function(MangaTag, MangaTag) sortFunc(SortingType sortType, SortingOrder sortOrder) {
+		switch (sortType) {
+			case SortingType.name: return (a, b) => sortOrder.value * a.name.compareTo(b.name);
+			case SortingType.count: return (a, b) => sortOrder.value * (b.count - a.count);
+			default: return (a, b) => 0;
+		}
 	}
 
 	@override

@@ -53,16 +53,6 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 
 		await _updateValue(key, newValue);
 	}
-	Future<void> _openLink(String link) async {
-		final Uri url = Uri.parse(link);
-		try {
-			if (!await launchUrl(url)) {
-				if (mounted) alertSnackbar(context, text: "Could not launch link '$link' in browser!");
-			}
-		} catch (err) {
-			if (mounted) alertSnackbar(context, text: "Could not launch link '$link' in browser!");
-		}
-	}
 	Future<void> _onAddTags(List<MangaTag> addTagList) async {
 		if (addTagList.isEmpty) return;
 
@@ -102,25 +92,13 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 		db.notifyUpdate(DatabaseTables.mangas);
 		db.notifyUpdate(DatabaseTables.mangaTags);
 	}
-	Future<void> _onDeleteManga() async {
-		// 1. Confirmation
-		final bool confrimation = await confirm(
-			context,
-			title: "Confirm Delete",
-			text: "Are you sure you want to delete this Manga?"
-		);
-		if (!confrimation) return;
-
-		// 2. Remove Manga record from database
-		final db = DatabaseHandler();
-		await db.deleteManga(_manga);
-		db.notifyUpdate(DatabaseTables.mangas);
-
-		// 3. Alert user, pop navigation
-		if (mounted) {
-			alertSnackbar(context, text: "Manga '${_manga.topName()}' removed!");
-			Navigator.of(context).pop();
-		}
+	Future<void> _onUpdateLink() async {
+		setState(() async {
+		  _manga.time_last_read = DateTime.now();
+			final db = DatabaseHandler();
+			await db.updateManga(_manga);
+			if (mounted) alertSnackbar(context, text: "Time last read updated !");
+		});
 	}
 
 	Future<void> _updateValue(String key, dynamic value) async {
@@ -179,7 +157,7 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 						onRemoveTag: _editing ? _onRemoveTag : null,
 					),
 					const SizedBox(height: 12),
-					_deleteMangaCard(),
+					_DeleteMangaCard(manga: _manga),
 					const SizedBox(height: 64),
 				],
 			),
@@ -294,9 +272,9 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 	Widget _viewDisplay() {
 		final List<Widget> arr = [];
 
-		if (_manga.ch_link.isNotEmpty) arr.add(_linkDisplay(title: "Manga (Chinese)", link: _manga.ch_link));
-		if (_manga.en_link.isNotEmpty) arr.add(_linkDisplay(title: "Manga (English)", link: _manga.en_link));
-		if (_manga.jp_link.isNotEmpty) arr.add(_linkDisplay(title: "Manga (Japanese)", link: _manga.jp_link));
+		if (_manga.ch_link.isNotEmpty) arr.add(_LinkDisplayCard(manga: _manga, title: "Manga (Chinese)", link: _manga.ch_link, onUpdate: _onUpdateLink));
+		if (_manga.en_link.isNotEmpty) arr.add(_LinkDisplayCard(manga: _manga, title: "Manga (English)", link: _manga.en_link, onUpdate: _onUpdateLink));
+		if (_manga.jp_link.isNotEmpty) arr.add(_LinkDisplayCard(manga: _manga, title: "Manga (Japanese)", link: _manga.jp_link, onUpdate: _onUpdateLink));
 		if (_manga.ch_name.isNotEmpty) arr.add(_textInfoCard(title: "Chinese Name", value: _manga.ch_name));
 		if (_manga.en_name.isNotEmpty) arr.add(_textInfoCard(title: "English Name", value: _manga.en_name));
 		if (_manga.jp_name.isNotEmpty) arr.add(_textInfoCard(title: "Japanese Name", value: _manga.jp_name));
@@ -304,6 +282,8 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 			_numberInfoCard(title: "Chapter Count", value: _manga.chapter_count),
 			_mangaLengthCard(),
 			_ratingCard(),
+			_DateDisplayCard(title: "Time last read", date: _manga.time_last_read),
+			_DateDisplayCard(title: "Time added", date: _manga.time_added),
 		]);
 
 		return AppCardSplash(
@@ -316,23 +296,113 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 			),
 		);
 	}
-	Widget _linkDisplay({required String title, required String link}) {
+}
+class _LinkDisplayCard extends StatelessWidget {
+	final Manga manga;
+	final String title;
+	final String link;
+	final Function() onUpdate;
+	
+	const _LinkDisplayCard({
+		required this.manga,
+		required this.title,
+		required this.link,
+		required this.onUpdate,
+	});
+
+	@override
+  Widget build(BuildContext context) {
+    return ListTile(
+			contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+			title: Text(title),
+			trailing: Row(
+				mainAxisSize: MainAxisSize.min,
+				children: [
+					Card(
+						clipBehavior: Clip.antiAlias,
+						color: Theme.of(context).colorScheme.primaryContainer,
+						child: InkWell(
+							onTap: onUpdate,
+							child: Ink(
+								padding: const EdgeInsets.all(12),
+								child: const Text("Mark Read"),
+							),
+						),
+					),
+					Card(
+						clipBehavior: Clip.antiAlias,
+						color: Theme.of(context).colorScheme.primaryContainer,
+						child: InkWell(
+							onTap: () async {
+								final Uri url = Uri.parse(link);
+								try {
+									if (!await launchUrl(url)) {
+										if (context.mounted) alertSnackbar(context, text: "Could not launch link '$link' in browser!");
+									}
+								} catch (err) {
+									if (context.mounted) alertSnackbar(context, text: "Could not launch link '$link' in browser!");
+								}
+							},
+							child: Ink(
+								padding: const EdgeInsets.all(12),
+								child: const Text("Open Link"),
+							),
+						),
+					),
+				],
+			)
+		);
+  }
+}
+class _DateDisplayCard extends StatelessWidget {
+	final String title;
+	final DateTime date;
+
+	const _DateDisplayCard({
+		required this.title,
+		required this.date,
+	});
+
+	@override
+  Widget build(BuildContext context) {
 		return ListTile(
 			contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
 			title: Text(title),
-			trailing: Card(
-				child: TextButton(
-					onPressed: () => _openLink(link),
-					child: const Text("Open Link")
-				),
-			),
+			subtitle: Text(date.toString()),
 		);
 	}
+}
+class _DeleteMangaCard extends StatelessWidget {
+	final Manga manga;
 
-	Widget _deleteMangaCard() {
+	const _DeleteMangaCard({
+		required this.manga,
+	});
+
+	@override
+  Widget build(BuildContext context) {
 		return AppCardSplash(
 			child: InkWell(
-				onTap: _onDeleteManga,
+				onTap: () async {
+					// 1. Confirmation
+					final bool confrimation = await confirm(
+						context,
+						title: "Confirm Delete",
+						text: "Are you sure you want to delete this Manga?"
+					);
+					if (!confrimation) return;
+
+					// 2. Remove Manga record from database
+					final db = DatabaseHandler();
+					await db.deleteManga(manga);
+					db.notifyUpdate(DatabaseTables.mangas);
+
+					// 3. Alert user, pop navigation
+					if (context.mounted) {
+						alertSnackbar(context, text: "Manga '${manga.topName()}' removed!");
+						Navigator.of(context).pop();
+					}
+				},
 				child: Padding(
 					padding: const EdgeInsets.all(8),
 					child: Row(
@@ -355,5 +425,5 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 				),
 			),
 		);
-	}
+  }
 }
