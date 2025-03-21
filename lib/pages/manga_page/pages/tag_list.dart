@@ -36,7 +36,7 @@ class _MangaTagListPageState extends State<MangaTagListPage> {
 		// 2. Update tag in database & UI
 		final MangaTag tag = MangaTag(name: tagName, count: 0, id: -1);
 		final db = DatabaseHandler();
-		await db.createMangaTag(tag);
+		await db.createRecord(DatabaseTables.mangaTags, tag);
 		await _updateTagList();
 	}
 	Future<void> _onRenameTag(MangaTag tag) async {

@@ -112,14 +112,14 @@ class Manga {
 		if (bookmarkList != null) bookmarkList = "[${bookmarkList.substring(1, bookmarkList.length-1)}]";
 		
 		return Manga(
-			ch_name: map["ch_name"],
-			ch_link: map["ch_link"],
-			en_name: map["en_name"],
-			en_link: map["en_link"],
-			jp_name: map["jp_name"],
-			jp_link: map["jp_link"],
-			img_link: map["img_link"],
-			description: map["description"],
+			ch_name: map["ch_name"] ?? "",
+			ch_link: map["ch_link"] ?? "",
+			en_name: map["en_name"] ?? "",
+			en_link: map["en_link"] ?? "",
+			jp_name: map["jp_name"] ?? "",
+			jp_link: map["jp_link"] ?? "",
+			img_link: map["img_link"] ?? "",
+			description: map["description"] ?? "",
 			id: map["id"],
 			chapter_count: map["chapter_count"],
 			length: (map["length"] is int) ? MangaLength.fromValue(map["length"] as int) : map["length"],

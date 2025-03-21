@@ -101,11 +101,30 @@ class DatabaseHandler {
 		streams[table]!.add("");
 	}
 
-	Future<void> createManga(Manga manga) async {
-		final map = manga.toMap();
+	Future<void> createRecord(DatabaseTables table, dynamic object) async {
+		assert(object == null);
+		assert(object.toMap == null);
+		
+		final map = object.toMap();
 		map["id"] = null;
-		await db.insert(DatabaseTables.mangas.toString(), map);
+		await db.insert(
+			table.toString(), 
+			map
+		);
 	}
+	Future<dynamic> getRecordFromId(DatabaseTables table, int id) async {
+		try {
+			final result = await db.query(
+				table.toString(), 
+				where: "id = $id"
+			);
+
+			return MangaTag.fromMap(result.first);
+		} catch (err) {
+			return null;
+		}
+	}
+
 	Future<void> updateManga(Manga manga) async {
 		await db.update(DatabaseTables.mangas.toString(), manga.toMap(), where: "id = ${manga.id}");
 	}
@@ -147,14 +166,6 @@ class DatabaseHandler {
 		return returnArr;
 	}
 
-	Future<void> createMangaTag(MangaTag tag) async {
-		final map = tag.toMap();
-		map["id"] = null;
-		await db.insert(
-			DatabaseTables.mangaTags.toString(), 
-			map
-		);
-	}
 	Future<void> updateMangaTag(MangaTag tag) async {
 		await db.update(
 			DatabaseTables.mangaTags.toString(), 
@@ -198,5 +209,8 @@ class DatabaseHandler {
 		return arr;
 	}
 
-	
+
+	Future<void> getMangaBookmarkFromId(int id) async {
+
+	}
 }

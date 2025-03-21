@@ -71,7 +71,7 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 		db.notifyUpdate(DatabaseTables.mangaTags);
 		if (mounted) alertSnackbar(context, text: "Tags added to manga!");
 		setState(() {
-		  _tagList.addAll(addTagList);
+			_tagList.addAll(addTagList);
 		});
 	}
 	Future<void> _onRemoveTag(MangaTag removeTag) async {
@@ -85,7 +85,7 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 		_tagList[index].count--;
 		await db.updateMangaTag(_tagList[index]);
 		setState(() {
-		  _tagList.removeAt(index);
+			_tagList.removeAt(index);
 		});
 
 		// 3. Update UI & broadcast change
@@ -94,7 +94,7 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 	}
 	Future<void> _onUpdateLink() async {
 		setState(() async {
-		  _manga.time_last_read = DateTime.now();
+			_manga.time_last_read = DateTime.now();
 			final db = DatabaseHandler();
 			await db.updateManga(_manga);
 			if (mounted) alertSnackbar(context, text: "Time last read updated !");
@@ -116,15 +116,15 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 	Future<void> _fetchTagList() async {
 		final db = DatabaseHandler();
 
-		List<MangaTag> tmpList = [];
+		List<MangaTag> tmpTagList = [];
 		for (final int id in _manga.tag_list) {
 			final MangaTag? tag = await db.getMangaTagFromId(id);
 			if (tag == null) throw ErrorDescription("MangaTag with id $id cannot be found in database.");
-			tmpList.add(tag);
+			tmpTagList.add(tag);
 		}
 
 		setState(() {
-			_tagList = tmpList;
+			_tagList = tmpTagList;
 		});
 	}
 
@@ -147,7 +147,24 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 				children: [
 					MangaCard(manga: _manga),
 					const SizedBox(height: 12),
-					_editing ? _editDisplay() : _viewDisplay(),
+					_BookmarkDisplayCard(manga: _manga),
+					const SizedBox(height: 12),
+					if (_editing) _editDisplay() 
+					else ...[
+						AppCard(
+							padding: const EdgeInsets.all(8),
+							child: Column(
+								mainAxisSize: MainAxisSize.min,
+								crossAxisAlignment: CrossAxisAlignment.start,
+								children: [
+									const Text("Description : ", textScaler: TextScaler.linear(1.3)),
+									Text(_manga.description)
+								],
+							),
+						),
+						const SizedBox(height: 12),
+						_viewDisplay()
+					],
 					const SizedBox(height: 12),
 					MangaTagListCard(
 						tagList: _tagList,
@@ -172,6 +189,7 @@ class _ViewMangaPageState extends State<ViewMangaPage> {
 			_textInfoCard(title: "Chinese Name", key: "ch_name", value: _manga.ch_name),
 			_textInfoCard(title: "English Name", key: "en_name", value: _manga.en_name),
 			_textInfoCard(title: "Japanese Name", key: "jp_name", value: _manga.jp_name),
+			_textInfoCard(title: "Description", key: "description", value: _manga.description),
 			_textInfoCard(title: "Chinese Manga Link", key: "ch_link", value: _manga.ch_link),
 			_textInfoCard(title: "English Manga Link", key: "en_link", value: _manga.en_link),
 			_textInfoCard(title: "Japanese Manga Link", key: "jp_link", value: _manga.jp_link),
@@ -311,8 +329,8 @@ class _LinkDisplayCard extends StatelessWidget {
 	});
 
 	@override
-  Widget build(BuildContext context) {
-    return ListTile(
+	Widget build(BuildContext context) {
+		return ListTile(
 			contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
 			title: Text(title),
 			trailing: Row(
@@ -352,7 +370,7 @@ class _LinkDisplayCard extends StatelessWidget {
 				],
 			)
 		);
-  }
+	}
 }
 class _DateDisplayCard extends StatelessWidget {
 	final String title;
@@ -364,7 +382,7 @@ class _DateDisplayCard extends StatelessWidget {
 	});
 
 	@override
-  Widget build(BuildContext context) {
+	Widget build(BuildContext context) {
 		return ListTile(
 			contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
 			title: Text(title),
@@ -380,7 +398,7 @@ class _DeleteMangaCard extends StatelessWidget {
 	});
 
 	@override
-  Widget build(BuildContext context) {
+	Widget build(BuildContext context) {
 		return AppCardSplash(
 			child: InkWell(
 				onTap: () async {
@@ -425,5 +443,65 @@ class _DeleteMangaCard extends StatelessWidget {
 				),
 			),
 		);
+	}
+}
+class _BookmarkDisplayCard extends StatefulWidget {
+	final Manga manga;
+	
+	const _BookmarkDisplayCard({
+		required this.manga,
+	});
+
+	@override
+	State<_BookmarkDisplayCard> createState() => _BookmarkDisplayCardState();
+}
+class _BookmarkDisplayCardState extends State<_BookmarkDisplayCard> {
+	List<MangaBookmarks> _bookmarkList = [];
+
+	Future<void> _fetchBookmarkList() async {
+		final db = DatabaseHandler();
+
+		List<MangaBookmarks> tmpBookmarkList = [];
+		for (final int id in widget.manga.bookmark_list) {
+			final MangaBookmarks? bookmark = await db.getRecordFromId(DatabaseTables.mangaBookmarks, id);
+			if (bookmark == null) throw ErrorDescription("MangaBookmark with id $id cannot be found in database.");
+			tmpBookmarkList.add(bookmark);
+		}
+
+		setState(() {
+			_bookmarkList = tmpBookmarkList;
+		});
+	}
+
+	@override
+  void initState() {
+    _fetchBookmarkList();
+		super.initState();
   }
+
+	@override
+	Widget build(BuildContext context) {
+		return AppCard(
+			padding: const EdgeInsets.all(8),
+			child: Column(
+				mainAxisSize: MainAxisSize.min,
+				crossAxisAlignment: CrossAxisAlignment.start,
+				children: [
+					Row(
+						mainAxisAlignment: MainAxisAlignment.spaceBetween,
+						children: [
+							const Text("Bookmarks : ", textScaler: TextScaler.linear(1.3)),
+							IconButton(
+								onPressed: () {}, 
+								icon: const Icon(Icons.keyboard_arrow_down)
+							)
+						],
+					),
+					..._bookmarkList.map((MangaBookmarks bookmark) => ListTile(
+						title: Text(""),
+					)),
+				],
+			),
+		);
+	}
 }

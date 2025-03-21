@@ -126,7 +126,7 @@ class _ViewTagPage extends State<ViewTagPage> {
 							color: Theme.of(context).colorScheme.surfaceContainer,
 							borderRadius: const BorderRadius.all(Radius.circular(8)) 
 						),
-						child: ListView.builder(
+						child: _mangaList.isEmpty ? const Text("No manga has used this tag yet.") : ListView.builder(
 							shrinkWrap: true,
 							itemBuilder: (context, index) => AppCard(
 								padding: const EdgeInsets.all(8),

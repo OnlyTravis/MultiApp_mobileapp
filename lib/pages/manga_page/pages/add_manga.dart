@@ -18,6 +18,7 @@ class AddMangaPage extends StatefulWidget {
 class _AddMangaPageState extends State<AddMangaPage> {
 	final List<TextEditingController> _inputNameControllers = [TextEditingController(), TextEditingController(), TextEditingController()];
 	final List<TextEditingController> _inputLinkControllers = [TextEditingController(), TextEditingController(), TextEditingController()];
+	final TextEditingController _descriptionController = TextEditingController();
 	final TextEditingController _imageLinkController = TextEditingController();
 	final TextEditingController _chapterCountController = TextEditingController();
 	final List<MangaTag> _tagList = [];
@@ -64,6 +65,7 @@ class _AddMangaPageState extends State<AddMangaPage> {
 			en_link: _inputLinkControllers[1].text,
 			jp_link: _inputLinkControllers[2].text,
 			img_link: _imageLinkController.text,
+			description: _descriptionController.text,
 			id: -1, 
 			chapter_count: int.parse(_chapterCountController.text),
 			rating: _toggleRating ? (_rating*10).round()/10 : -1,
@@ -71,7 +73,7 @@ class _AddMangaPageState extends State<AddMangaPage> {
 			ended: _ended,
 			tag_list: _tagList.map((MangaTag tag) => tag.id).toList(),
 		);
-		await db.createManga(manga);
+		await db.createRecord(DatabaseTables.mangas, manga);
 
 		// 3. Update Tag's count in database
 		for (final tag in _tagList) {
@@ -112,8 +114,8 @@ class _AddMangaPageState extends State<AddMangaPage> {
 						_textInputCard(labelList: const ["Chinese Name", "English Name", "Japanese Name"], controllerList: _inputNameControllers),
 						_cardTitle(title: "2. Manga Links : (optional)"),
 						_textInputCard(labelList: const ["Chinese Link", "English Link", "Japanese Link"], controllerList: _inputLinkControllers),
-						_cardTitle(title: "3. Manga Image Link : (optional)"),
-						_textInputCard(labelList: const ["Image Link"], controllerList: [_imageLinkController]),
+						_cardTitle(title: "3. Description & Manga Image Link : (optional)"),
+						_textInputCard(labelList: const ["Description", "Image Link"], controllerList: [_descriptionController, _imageLinkController]),
 						_cardTitle(title: "4. Manga States : "),
 						_mangaStateInputCard(),            
 						_cardTitle(title: "5. Manga Tags : (optional)"),
